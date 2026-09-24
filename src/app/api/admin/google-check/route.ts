@@ -42,7 +42,10 @@ export async function GET(): Promise<Response> {
     const auth = new google.auth.JWT({
       email,
       key,
-      scopes: ["https://www.googleapis.com/auth/drive.file"],
+      // Deliberately wider than the export's `drive.file`, which only ever sees files the
+      // app itself created — a folder the user made is invisible under it, so the check
+      // would 404 on a perfectly well-shared folder and prove nothing. Read-only.
+      scopes: ["https://www.googleapis.com/auth/drive.metadata.readonly"],
     });
     const folder = await google.drive({ version: "v3", auth }).files.get({
       fileId: folderId,
