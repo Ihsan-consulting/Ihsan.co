@@ -51,6 +51,46 @@ export function InviteeList({ invitees }: { invitees: MeetingInvitee[] }) {
   );
 }
 
+type GoogleDocPanelProps = {
+  docUrl: string | null;
+  syncedAt: string | null;
+};
+
+/**
+ * Espejo de la reunión en Google Drive. Sin documento no hay botón: el pipeline
+ * solo lo crea cuando Google está configurado, y un enlace muerto sería peor que
+ * decirlo claro.
+ */
+export function GoogleDocPanel({ docUrl, syncedAt }: GoogleDocPanelProps) {
+  return (
+    <section aria-labelledby="documento" className={styles.railPanel}>
+      <div className={styles.railHead}>
+        <h2 id="documento" className={styles.railTitle}>
+          Documento
+        </h2>
+        <span className={styles.railCount}>Google Docs</span>
+      </div>
+
+      {docUrl ? (
+        <>
+          <a className={styles.docLink} href={docUrl} target="_blank" rel="noreferrer">
+            Abrir en Google Docs
+            <span aria-hidden="true">↗</span>
+          </a>
+          <p className={styles.docMeta}>
+            Sincronizado el <span className="num">{formatDateTime(syncedAt)}</span>
+          </p>
+        </>
+      ) : (
+        <p className={styles.railEmpty}>
+          Esta llamada todavía no tiene documento en Drive. Se crea solo, cuando el pipeline
+          procesa la grabación con Google configurado.
+        </p>
+      )}
+    </section>
+  );
+}
+
 export function DeliveryTrail({ deliveries }: { deliveries: MeetingDelivery[] }) {
   return (
     <section aria-labelledby="entregas" className={styles.railPanel}>

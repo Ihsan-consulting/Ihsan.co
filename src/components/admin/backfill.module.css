@@ -1,0 +1,59 @@
+/* Uses only tokens from globals.css so the control inherits the dark system
+   instead of introducing a second palette. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.button {
+  font: inherit;
+  font-size: var(--t-xs);
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--line-control);
+  border-radius: 999px;
+  padding: 0.5rem 0.95rem;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--surface-hover);
+  border-color: var(--line-hover);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  color: var(--ink-3);
+  cursor: progress;
+}
+
+.note {
+  font-size: var(--t-2xs);
+  color: var(--ink-3);
+  margin: 0;
+  max-width: 34rem;
+}
+
+.noteError {
+  color: var(--danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+  .button:active:not(:disabled) {
+    transform: none;
+  }
+}

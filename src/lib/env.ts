@@ -13,6 +13,16 @@ const schema = z.object({
 
   DISCORD_DEFAULT_WEBHOOK_URL: z.string().url(),
 
+  // Las cuatro son opcionales a propósito: el pipeline está en producción y el espejo
+  // en Google Drive nunca puede impedir que se genere el brief ni que se publique en
+  // Discord. Sin las cuatro, el export simplemente no se intenta.
+  // GOOGLE_PRIVATE_KEY se guarda con secuencias `\n` literales de dos caracteres; la
+  // conversión a saltos de línea reales vive en src/lib/google/docs.ts.
+  GOOGLE_SERVICE_ACCOUNT_EMAIL: z.string().min(1).optional(),
+  GOOGLE_PROJECT_ID: z.string().min(1).optional(),
+  GOOGLE_DRIVE_FOLDER_ID: z.string().min(1).optional(),
+  GOOGLE_PRIVATE_KEY: z.string().min(1).optional(),
+
   // The login throttle lives in one serverless instance's memory and resets on cold
   // start, so it cannot be the real defence against guessing. Password length is.
   DASHBOARD_PASSWORD: z.string().min(24),

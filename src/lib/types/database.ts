@@ -200,6 +200,9 @@ export type Database = {
           crm_matches: Json | null
           default_summary_markdown: string | null
           default_summary_template: string | null
+          google_doc_id: string | null
+          google_doc_synced_at: string | null
+          google_doc_url: string | null
           meeting_url: string | null
           recorded_by_email: string | null
           recorded_by_name: string | null
@@ -221,6 +224,9 @@ export type Database = {
           crm_matches?: Json | null
           default_summary_markdown?: string | null
           default_summary_template?: string | null
+          google_doc_id?: string | null
+          google_doc_synced_at?: string | null
+          google_doc_url?: string | null
           meeting_url?: string | null
           recorded_by_email?: string | null
           recorded_by_name?: string | null
@@ -242,6 +248,9 @@ export type Database = {
           crm_matches?: Json | null
           default_summary_markdown?: string | null
           default_summary_template?: string | null
+          google_doc_id?: string | null
+          google_doc_synced_at?: string | null
+          google_doc_url?: string | null
           meeting_url?: string | null
           recorded_by_email?: string | null
           recorded_by_name?: string | null

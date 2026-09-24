@@ -1,10 +1,13 @@
 import { generateMeetingBrief, type MeetingBriefResult } from "@/lib/ai/gemini";
 import { sendDiscordBrief, type DiscordSendResult } from "@/lib/discord/notify";
 import { transcriptToPlainText, type FathomTranscriptEntry } from "@/lib/fathom/payload";
+import { createMeetingDoc, isGoogleConfigured } from "@/lib/google/docs";
 import { getAdminClient, type AdminClient } from "@/lib/supabase/admin";
 import type { Json, TablesInsert } from "@/lib/types/database";
 
 const CHANNEL = "discord";
+const GOOGLE_CHANNEL = "google_docs";
+const GOOGLE_TARGET = "google_drive";
 const LANGUAGE = "es";
 
 export type ProcessParams = { recordingId: number; webhookId?: string | null };
@@ -17,6 +20,9 @@ type MeetingContext = {
   title: string;
   shareUrl: string | null;
   summaryMarkdown: string | null;
+  startedAt: string | null;
+  recordedByName: string | null;
+  googleDocId: string | null;
   transcript: string;
   participants: string[];
   actionItems: string[];
@@ -36,7 +42,9 @@ async function loadContext(
 ): Promise<MeetingContext | null> {
   const meeting = await db
     .from("meetings")
-    .select("title, share_url, transcript, default_summary_markdown")
+    .select(
+      "title, share_url, transcript, default_summary_markdown, recording_start_time, recorded_by_name, google_doc_id",
+    )
     .eq("recording_id", recordingId)
     .maybeSingle();
 
@@ -56,6 +64,9 @@ async function loadContext(
     title: meeting.data.title,
     shareUrl: meeting.data.share_url,
     summaryMarkdown: meeting.data.default_summary_markdown,
+    startedAt: meeting.data.recording_start_time,
+    recordedByName: meeting.data.recorded_by_name,
+    googleDocId: meeting.data.google_doc_id,
     transcript: transcriptToPlainText(toTranscriptEntries(meeting.data.transcript)),
     participants: (invitees.data ?? [])
       .map((row) => row.name ?? row.email ?? "")
@@ -92,19 +103,20 @@ async function saveInsights(
 async function recordDelivery(
   db: AdminClient,
   recordingId: number,
+  channel: string,
   outcome: DiscordSendResult,
 ): Promise<void> {
   const existing = await db
     .from("deliveries")
     .select("attempts")
     .eq("recording_id", recordingId)
-    .eq("channel", CHANNEL)
+    .eq("channel", channel)
     .maybeSingle();
 
   const now = new Date().toISOString();
   const row: TablesInsert<"deliveries"> = {
     recording_id: recordingId,
-    channel: CHANNEL,
+    channel,
     status: outcome.ok ? "sent" : "failed",
     target: outcome.target,
     error: outcome.ok ? null : outcome.error,
@@ -117,6 +129,74 @@ async function recordDelivery(
     .from("deliveries")
     .upsert(row, { onConflict: "recording_id,channel" });
   if (error) console.error("deliveries upsert failed:", error.message);
+}
+
+async function saveDocRef(
+  db: AdminClient,
+  recordingId: number,
+  docId: string,
+  docUrl: string,
+): Promise<void> {
+  const { error } = await db
+    .from("meetings")
+    .update({
+      google_doc_id: docId,
+      google_doc_url: docUrl,
+      google_doc_synced_at: new Date().toISOString(),
+    })
+    .eq("recording_id", recordingId);
+  if (error) console.error("meetings google doc update failed:", error.message);
+}
+
+/**
+ * Espejo en Google Drive. Nunca puede tumbar el pipeline:
+ * - si la reunión ya tiene `google_doc_id` no se hace nada, así que re-ejecutar
+ *   el proceso —algo rutinario aquí— jamás duplica documentos;
+ * - si Google no está configurado se sale sin dejar una entrega fallida;
+ * - cualquier otro fallo se registra en `deliveries` y Discord sigue su curso.
+ */
+async function syncGoogleDoc(
+  db: AdminClient,
+  recordingId: number,
+  context: MeetingContext,
+  brief: Extract<MeetingBriefResult, { ok: true }>["brief"],
+): Promise<void> {
+  if (context.googleDocId) return;
+  if (!isGoogleConfigured()) return;
+
+  try {
+    const result = await createMeetingDoc({
+      title: context.title,
+      startedAt: context.startedAt,
+      shareUrl: context.shareUrl,
+      recordedByName: context.recordedByName,
+      brief: {
+        headline: brief.headline,
+        executiveSummary: brief.executive_summary,
+        keyDecisions: brief.key_decisions,
+        risks: brief.risks,
+        nextSteps: brief.next_steps,
+        sentiment: brief.sentiment ?? null,
+      },
+      fathomSummaryMarkdown: context.summaryMarkdown,
+      actionItems: context.actionItems,
+      attendees: context.participants,
+      transcript: context.transcript,
+    });
+
+    if (result.ok) await saveDocRef(db, recordingId, result.docId, result.docUrl);
+
+    await recordDelivery(
+      db,
+      recordingId,
+      GOOGLE_CHANNEL,
+      result.ok
+        ? { ok: true, target: result.docUrl }
+        : { ok: false, target: GOOGLE_TARGET, error: result.reason },
+    );
+  } catch (error) {
+    console.error(`google docs sync failed for recording ${recordingId}: ${toMessage(error)}`);
+  }
 }
 
 async function stampEvent(
@@ -146,10 +226,12 @@ async function fail(
 }
 
 /**
- * Brief -> insights -> Discord -> delivery record -> event stamp.
+ * Brief -> insights -> Google Doc -> Discord -> delivery record -> event stamp.
  *
- * Safe to re-run: every write is an upsert, and a Gemini or Discord failure is recorded
- * in `deliveries` / `webhook_events` without touching the already-persisted meeting.
+ * Safe to re-run: every write is an upsert, the Doc is only created when the meeting has
+ * no `google_doc_id` yet, and a Gemini, Google or Discord failure is recorded in
+ * `deliveries` / `webhook_events` without touching the already-persisted meeting. A
+ * Google failure never blocks the Discord delivery.
  */
 export async function processMeeting(params: ProcessParams): Promise<ProcessResult> {
   const db = getAdminClient();
@@ -167,7 +249,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     });
 
     if (!brief.ok) {
-      await recordDelivery(db, params.recordingId, {
+      await recordDelivery(db, params.recordingId, CHANNEL, {
         ok: false,
         target: CHANNEL,
         error: brief.reason,
@@ -176,6 +258,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     }
 
     await saveInsights(db, params.recordingId, brief);
+    await syncGoogleDoc(db, params.recordingId, context, brief.brief);
 
     const delivery = await sendDiscordBrief({
       title: context.title,
@@ -188,7 +271,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
       sentiment: brief.brief.sentiment,
     });
 
-    await recordDelivery(db, params.recordingId, delivery);
+    await recordDelivery(db, params.recordingId, CHANNEL, delivery);
     if (!delivery.ok) return await fail(db, params, delivery.error);
 
     await stampEvent(db, params.webhookId, null);

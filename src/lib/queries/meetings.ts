@@ -93,6 +93,8 @@ export type MeetingDetail = {
   fathomSummaryTemplate: string | null;
   fathomSummaryMarkdown: string | null;
   hasTranscript: boolean;
+  googleDocUrl: string | null;
+  googleDocSyncedAt: string | null;
   createdAt: string;
   updatedAt: string;
   brief: MeetingBrief | null;
@@ -383,6 +385,8 @@ export async function getMeetingDetail(recordingId: number): Promise<MeetingDeta
     fathomSummaryTemplate: meeting.default_summary_template,
     fathomSummaryMarkdown: meeting.default_summary_markdown,
     hasTranscript: meeting.transcript !== null,
+    googleDocUrl: meeting.google_doc_url,
+    googleDocSyncedAt: meeting.google_doc_synced_at,
     createdAt: meeting.created_at,
     updatedAt: meeting.updated_at,
     brief: insight

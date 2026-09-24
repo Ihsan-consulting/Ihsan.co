@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BackfillButton } from "@/components/admin/BackfillButton";
 import { DeliveryLog, PendingDeliveries } from "@/components/dashboard/Deliveries";
 import { DecisionQueue, TodayList } from "@/components/dashboard/DecisionQueue";
 import { TeamLoadList, ToneBars, TrendChart } from "@/components/dashboard/Signals";
@@ -80,6 +81,7 @@ export default async function DashboardPage() {
             <a href="#cola" className={styles.ctaGhost}>
               Ir a la cola de decisiones
             </a>
+            <BackfillButton />
           </>
         }
       />

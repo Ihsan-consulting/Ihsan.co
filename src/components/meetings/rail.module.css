@@ -90,6 +90,37 @@
   white-space: nowrap;
 }
 
+/* --- Documento en Drive -------------------------------------------------- */
+
+.docLink {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--accent-soft);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-sunk);
+  font-size: var(--t-sm);
+  color: var(--accent-ink);
+  text-decoration: none;
+  transition:
+    border-color 140ms ease,
+    background-color 140ms ease;
+}
+
+.docLink:hover,
+.docLink:focus-visible {
+  border-color: var(--accent-ink);
+  background-color: rgba(94, 92, 230, 0.12);
+}
+
+.docMeta {
+  margin-top: var(--sp-3);
+  font-size: var(--t-2xs);
+  color: var(--ink-4);
+}
+
 /* --- Entregas ----------------------------------------------------------- */
 
 .deliveries {

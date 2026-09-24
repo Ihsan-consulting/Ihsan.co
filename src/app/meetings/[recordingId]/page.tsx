@@ -13,7 +13,7 @@ import {
 import { BriefPanel, SourceSummary } from "@/components/meetings/Brief";
 import { ActionItemList } from "@/components/meetings/Commitments";
 import { RecordingPlayer, SendChecklist } from "@/components/meetings/Detail";
-import { DeliveryTrail, InviteeList } from "@/components/meetings/Sidebar";
+import { DeliveryTrail, GoogleDocPanel, InviteeList } from "@/components/meetings/Sidebar";
 import { StatusBadge } from "@/components/ui/primitives";
 import { getMeetingDetail } from "@/lib/queries/meetings";
 
@@ -149,11 +149,15 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           />
         </div>
 
-        <aside className={styles.detailRail} aria-label="Recorrido, asistentes y entregas">
+        <aside className={styles.detailRail} aria-label="Recorrido, documento, asistentes y entregas">
           <SendChecklist
             hasTranscript={meeting.hasTranscript}
             hasBrief={meeting.brief !== null}
             deliveries={meeting.deliveries}
+          />
+          <GoogleDocPanel
+            docUrl={meeting.googleDocUrl}
+            syncedAt={meeting.googleDocSyncedAt}
           />
           <InviteeList invitees={meeting.invitees} />
           <DeliveryTrail deliveries={meeting.deliveries} />
