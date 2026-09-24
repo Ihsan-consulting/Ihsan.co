@@ -24,6 +24,19 @@ const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     items: [
       { href: "/", label: "Inicio", icon: "M2 6.2L7.5 2l5.5 4.2V13H9.3V9.4H5.7V13H2z" },
       { href: "/meetings", label: "Llamadas", icon: "M2 4h11M2 7.5h11M2 11h7" },
+      { href: "/alertas", label: "Alertas", icon: "M7.5 2.2L13.4 12.8H1.6zM7.5 6v3M7.5 10.9v.1" },
+    ],
+  },
+  {
+    label: "Conocimiento",
+    items: [
+      {
+        href: "/clientes",
+        label: "Clientes",
+        icon: "M5.6 7.2a2.3 2.3 0 100-4.6 2.3 2.3 0 000 4.6zM1.6 13c0-2.2 1.8-3.6 4-3.6s4 1.4 4 3.6M10.6 9.6c1.6.2 2.8 1.5 2.8 3.4",
+      },
+      { href: "/chat", label: "Chat", icon: "M2 3.2h11v7H6.8L3.6 12.6V10.2H2z" },
+      { href: "/equipo", label: "Equipo", icon: "M3 13V9.5M7.5 13V5M12 13V2" },
     ],
   },
 ];

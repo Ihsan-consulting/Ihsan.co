@@ -1,0 +1,294 @@
+/* Alertas: columna de tarjetas y panel lateral con el reparto por tipo. */
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 23.75rem), 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+  padding-bottom: var(--sp-12);
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+@media (min-width: 74rem) {
+  .column {
+    grid-column: span 2;
+  }
+}
+
+.more {
+  padding: var(--sp-3) var(--sp-1);
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+}
+
+/* --- Tarjeta de alerta --------------------------------------------------- */
+
+.card {
+  overflow: hidden;
+  background-color: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-3xl);
+}
+
+.body {
+  padding: var(--sp-8) var(--sp-9) var(--sp-7);
+}
+
+.top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-4);
+}
+
+.severity {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 24px;
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-2);
+  font-size: var(--t-xs);
+  font-weight: 600;
+}
+
+.severity[data-severity="critica"] {
+  background-color: var(--danger-wash);
+  color: var(--danger);
+}
+
+.severity[data-severity="alta"] {
+  background-color: var(--warn-wash);
+  color: var(--warn);
+}
+
+.kind {
+  color: var(--ink-3);
+  font-size: var(--t-xs);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.date {
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+  letter-spacing: -0.005em;
+}
+
+.headline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-top: var(--sp-6);
+}
+
+.title {
+  font-size: var(--t-2xl);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.meta {
+  color: var(--ink-4);
+  font-size: var(--t-sm);
+}
+
+.quote {
+  margin-top: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7);
+  background-color: var(--surface-sunk);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2xl);
+}
+
+.quoteText {
+  color: var(--ink);
+  font-size: var(--t-md);
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+  overflow-wrap: anywhere;
+}
+
+.quoteNote {
+  margin-top: var(--sp-4);
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+  letter-spacing: -0.005em;
+}
+
+.quoteEmpty {
+  margin-top: var(--sp-6);
+  padding: var(--sp-6) var(--sp-7);
+  background-color: var(--surface-sunk);
+  border: 1px dashed var(--line-control);
+  border-radius: var(--r-2xl);
+  color: var(--ink-4);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.detail {
+  margin-top: var(--sp-6);
+}
+
+.detailTitle {
+  color: var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: -0.008em;
+}
+
+.detailText {
+  margin-top: var(--sp-2);
+  color: var(--ink-2);
+  font-size: var(--t-md);
+  line-height: 1.6;
+  letter-spacing: -0.008em;
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-6) var(--sp-9);
+  border-top: 1px solid var(--line);
+}
+
+.action {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 34px;
+  padding: 0 var(--sp-6);
+  background-color: var(--accent);
+  border-radius: var(--r-lg);
+  color: #fff;
+  font-size: var(--t-sm);
+  font-weight: 590;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  transition: filter var(--dur-fast) var(--ease);
+}
+
+.action:hover {
+  color: #fff;
+  filter: brightness(1.1);
+}
+
+.owner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+  letter-spacing: -0.005em;
+}
+
+.ownerName {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  color: var(--ink);
+}
+
+.ownerAvatar {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-2);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+}
+
+/* --- Panel lateral ------------------------------------------------------- */
+
+.aside {
+  position: sticky;
+  top: var(--sp-5);
+  min-width: 0;
+  padding: var(--sp-8);
+  background-color: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-3xl);
+}
+
+.asideTitle {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+}
+
+.asideNote {
+  margin-top: var(--sp-1);
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+  letter-spacing: -0.005em;
+}
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  margin-top: var(--sp-7);
+}
+
+.barHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.barLabel {
+  color: var(--ink);
+  font-size: var(--t-sm);
+}
+
+.barValue {
+  margin-left: auto;
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+}
+
+.barTrack {
+  display: block;
+  height: 8px;
+  margin-top: var(--sp-2);
+  overflow: hidden;
+  background-color: var(--line);
+  border-radius: 4px;
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background-color: var(--ink-4);
+}
+
+.barFill[data-tone="danger"] {
+  background-color: var(--danger);
+}
+
+.barFill[data-tone="warn"] {
+  background-color: var(--warn);
+}
+
+.barFill[data-tone="accent"] {
+  background-color: var(--accent);
+}

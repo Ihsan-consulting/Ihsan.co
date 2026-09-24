@@ -124,7 +124,7 @@ export type ProblemDelivery = MeetingDelivery & {
 type QueryOutcome<T> = { data: T | null; error: { message: string } | null };
 type CountOutcome = { count: number | null; error: { message: string } | null };
 
-function unwrap<T>(outcome: QueryOutcome<T>, what: string): T {
+export function unwrap<T>(outcome: QueryOutcome<T>, what: string): T {
   if (outcome.error) {
     throw new Error(`No se pudo leer ${what}: ${outcome.error.message}`);
   }
@@ -142,7 +142,7 @@ function unwrapMaybe<T>(outcome: QueryOutcome<T>, what: string): T | null {
   return outcome.data;
 }
 
-function unwrapCount(outcome: CountOutcome, what: string): number {
+export function unwrapCount(outcome: CountOutcome, what: string): number {
   if (outcome.error) {
     throw new Error(`No se pudo contar ${what}: ${outcome.error.message}`);
   }
