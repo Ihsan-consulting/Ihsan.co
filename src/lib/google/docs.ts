@@ -80,9 +80,43 @@ function readConfig(): GoogleConfig | null {
 
   if (!clientEmail || !rawKey || !folderId || !projectId) return null;
 
-  // La clave viaja por una variable de entorno con secuencias `\n` de dos
-  // caracteres. Sin esta conversión el cliente JWT falla con un error opaco.
-  return { clientEmail, privateKey: rawKey.replace(/\\n/g, "\n"), folderId, projectId };
+  return {
+    clientEmail,
+    privateKey: normalizePrivateKey(rawKey),
+    folderId,
+    projectId,
+  };
+}
+
+/**
+ * Acepta la clave en cualquiera de las formas en que puede sobrevivir al viaje.
+ *
+ * Pegar un PEM en el formulario de un proveedor es donde esta integración suele morir:
+ * unos campos conservan las secuencias `\n` de dos caracteres, otros las convierten en
+ * saltos de línea reales y otros las pierden. El fallo resultante es siempre el mismo
+ * error opaco, `DECODER routines::unsupported`, que no dice nada de la causa.
+ *
+ * Aceptar las tres formas —y además base64, la única sin ningún carácter que un
+ * formulario pueda estropear— elimina el problema en vez de pedir que se pegue mejor.
+ */
+function normalizePrivateKey(raw: string): string {
+  let key = raw.trim();
+
+  // Los archivos .env envuelven el valor en comillas y el copiar/pegar se las lleva.
+  const quoted =
+    (key.startsWith('"') && key.endsWith('"')) || (key.startsWith("'") && key.endsWith("'"));
+  if (quoted) key = key.slice(1, -1).trim();
+
+  // Un bloque base64 no tiene cabecera PEM hasta que se decodifica.
+  if (!key.includes("-----BEGIN")) {
+    const decoded = Buffer.from(key, "base64").toString("utf8");
+    if (decoded.includes("-----BEGIN")) key = decoded.trim();
+  }
+
+  key = key.replace(/\\n/g, "\n").trim();
+
+  // OpenSSL exige el salto de línea final del PEM.
+  return `${key}\n`;
 }
 
 /** Permite al pipeline saltarse el intento sin registrar una entrega fallida. */
