@@ -47,6 +47,20 @@ export function timingSafeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
+/**
+ * Compares two secrets through their HMAC digests. A digest is always 43 characters, so
+ * — unlike comparing the raw strings — the work done here does not scale with the length
+ * of the real secret and cannot be probed as a length oracle.
+ */
+export async function secretsMatch(
+  secret: string,
+  candidate: string,
+  expected: string,
+): Promise<boolean> {
+  const [a, b] = await Promise.all([sign(secret, candidate), sign(secret, expected)]);
+  return timingSafeEqual(a, b);
+}
+
 export async function createSessionToken(secret: string): Promise<string> {
   const payload = JSON.stringify({
     exp: Math.floor(Date.now() / 1000) + SESSION_MAX_AGE_SECONDS,

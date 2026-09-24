@@ -21,9 +21,11 @@ export async function GET(): Promise<Response> {
   }
 
   try {
+    // No `count: "exact"`: that is an unbounded COUNT(*) that grows with the table, on an
+    // endpoint anyone can hit. Fetching one row answers "is the database reachable".
     const { error } = await getAdminClient()
       .from("meetings")
-      .select("recording_id", { head: true, count: "exact" })
+      .select("recording_id")
       .limit(1);
     if (error) throw new Error(error.message);
   } catch (error) {

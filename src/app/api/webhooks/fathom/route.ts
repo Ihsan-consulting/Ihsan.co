@@ -12,6 +12,8 @@ export const dynamic = "force-dynamic";
 const EVENT_TYPE = "new-meeting-content-ready";
 /** Postgres unique_violation — this webhook_id is already stored. */
 const UNIQUE_VIOLATION = "23505";
+/** How long the first attempt keeps ownership before a replay may take over. */
+const IN_FLIGHT_GRACE_MS = 2 * 60 * 1000;
 
 export async function POST(request: Request): Promise<Response> {
   // Must stay the raw string: the HMAC covers these exact bytes.
@@ -42,6 +44,30 @@ export async function POST(request: Request): Promise<Response> {
 
   if (stored.error) {
     if (stored.error.code === UNIQUE_VIOLATION) {
+      // A replay of an event we already stored. Answering a bare 200 is only right when
+      // the first attempt actually finished: if Gemini, Discord or the function's time
+      // budget killed the background task, this retry is the last chance to recover and
+      // the meeting would otherwise sit there with no brief and nothing retrying it.
+      const { data: existing } = await db
+        .from("webhook_events")
+        .select("processed_at, received_at")
+        .eq("webhook_id", verified.webhookId)
+        .maybeSingle();
+
+      const unfinished = existing !== null && existing.processed_at === null;
+      // Only step in once the original attempt cannot still be in flight, so a fast
+      // retry does not race it into a second Discord post.
+      const settled =
+        existing !== null &&
+        Date.now() - new Date(existing.received_at).getTime() > IN_FLIGHT_GRACE_MS;
+
+      if (unfinished && settled) {
+        after(async () => {
+          await processMeeting({ recordingId, webhookId: verified.webhookId });
+        });
+        return Response.json({ ok: true, duplicate: true, reprocessing: true });
+      }
+
       return Response.json({ ok: true, duplicate: true });
     }
     console.error("webhook_events insert failed:", stored.error.message);

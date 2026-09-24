@@ -4,7 +4,7 @@ import {
   SESSION_COOKIE_NAME,
   SESSION_MAX_AGE_SECONDS,
   createSessionToken,
-  timingSafeEqual,
+  secretsMatch,
 } from "@/lib/auth/session";
 
 export const runtime = "nodejs";
@@ -14,14 +14,16 @@ const WINDOW_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
 
 /**
- * Per-instance throttle. Serverless spreads requests across instances, so this raises
- * the cost of guessing rather than making it impossible — the real protection is a long
- * DASHBOARD_PASSWORD. Worth having anyway: it stops the cheap single-origin script.
+ * Per-instance throttle. Serverless spreads requests across instances and recycles them,
+ * so this raises the cost of a naive script rather than making guessing impossible — the
+ * real protection is the 24-char minimum enforced on DASHBOARD_PASSWORD in env.ts.
  */
 const failures = new Map<string, { count: number; resetAt: number }>();
 
 function clientIp(request: Request): string {
-  const forwarded = request.headers.get("x-forwarded-for");
+  // Vercel's own header is proxy-authoritative; x-forwarded-for can be client-supplied.
+  const forwarded =
+    request.headers.get("x-vercel-forwarded-for") ?? request.headers.get("x-forwarded-for");
   return forwarded?.split(",")[0]?.trim() || "unknown";
 }
 
@@ -44,10 +46,22 @@ function recordFailure(ip: string): void {
   entry.count += 1;
 }
 
-/** Only same-site paths may be redirect targets, so `next` cannot become an open redirect. */
-function safeNext(value: FormDataEntryValue | null): string {
-  const candidate = typeof value === "string" ? value : "";
-  return candidate.startsWith("/") && !candidate.startsWith("//") ? candidate : "/";
+/**
+ * Resolves `next` against a throwaway origin and keeps it only if it stayed there.
+ *
+ * A string-prefix check is not enough: the WHATWG parser treats a backslash as a slash
+ * for special schemes, so `/\evil.com` starts with a single "/" yet resolves to
+ * `https://evil.com/`. Round-tripping through the parser is the only check that agrees
+ * with what `NextResponse.redirect` will actually do.
+ */
+export function safeNext(value: FormDataEntryValue | null): string {
+  if (typeof value !== "string" || value === "") return "/";
+  try {
+    const probe = new URL(value, "https://x.invalid");
+    return probe.origin === "https://x.invalid" ? probe.pathname + probe.search : "/";
+  } catch {
+    return "/";
+  }
 }
 
 function backToLogin(request: Request, next: string, error: string) {
@@ -69,7 +83,11 @@ export async function POST(request: Request) {
   }
 
   const password = form.get("password");
-  if (typeof password !== "string" || !timingSafeEqual(password, env.DASHBOARD_PASSWORD)) {
+  const accepted =
+    typeof password === "string" &&
+    (await secretsMatch(env.SESSION_SECRET, password, env.DASHBOARD_PASSWORD));
+
+  if (!accepted) {
     recordFailure(ip);
     return backToLogin(request, next, "credentials");
   }

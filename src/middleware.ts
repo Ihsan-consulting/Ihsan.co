@@ -25,6 +25,6 @@ export const config = {
    * default is protected.
    */
   matcher: [
-    "/((?!api/webhooks|api/health|api/auth|login|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/webhooks/|api/health$|api/auth/|login$|_next/static|_next/image|favicon.ico).*)",
   ],
 };

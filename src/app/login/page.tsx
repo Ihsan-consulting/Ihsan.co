@@ -17,10 +17,22 @@ function firstValue(value: string | string[] | undefined): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-/** Mismo criterio que la ruta de login: solo rutas internas. */
+/**
+ * Mismo criterio que la ruta de login: solo rutas internas.
+ *
+ * Comprobar el prefijo no basta. El parser de URL trata la barra invertida como barra
+ * normal, así que `/\evil.com` empieza por una sola "/" y aun así resuelve a
+ * `https://evil.com/`. Resolver contra un origen desechable y exigir que no se haya
+ * movido es la única comprobación que coincide con lo que hará el redirect real.
+ */
 function safeNext(value: string | undefined): string {
   if (!value) return "/";
-  return value.startsWith("/") && !value.startsWith("//") ? value : "/";
+  try {
+    const probe = new URL(value, "https://x.invalid");
+    return probe.origin === "https://x.invalid" ? probe.pathname + probe.search : "/";
+  } catch {
+    return "/";
+  }
 }
 
 const ERROR_MESSAGES: Record<string, string> = {

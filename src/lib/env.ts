@@ -13,7 +13,9 @@ const schema = z.object({
 
   DISCORD_DEFAULT_WEBHOOK_URL: z.string().url(),
 
-  DASHBOARD_PASSWORD: z.string().min(8),
+  // The login throttle lives in one serverless instance's memory and resets on cold
+  // start, so it cannot be the real defence against guessing. Password length is.
+  DASHBOARD_PASSWORD: z.string().min(24),
   SESSION_SECRET: z.string().min(32),
 });
 

@@ -44,9 +44,23 @@ export function truncate(value: string, max: number): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
+/**
+ * Drops markdown link syntax, keeping the label.
+ *
+ * The brief is model output derived from a meeting transcript, and a call participant can
+ * dictate text designed to end up in it. Discord renders markdown links inside embeds, so
+ * an unsanitised brief can hand the team a clickable phishing link that looks like it came
+ * from our own automation. Keep the words, drop the destination.
+ */
+function sanitizeForEmbed(value: string): string {
+  return value
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/<(https?:\/\/[^>]*)>/g, "$1");
+}
+
 function bulletList(items: readonly string[]): string {
   return items
-    .map((item) => item.trim())
+    .map((item) => sanitizeForEmbed(item).trim())
     .filter((item) => item.length > 0)
     .map((item) => `• ${item}`)
     .join("\n");
@@ -97,8 +111,14 @@ export function buildMeetingEmbed(input: DiscordBriefInput): DiscordEmbed {
   ].filter((field): field is DiscordEmbedField => field !== null);
 
   const embed: DiscordEmbed = {
-    title: truncate(`${input.title} — ${input.headline}`, DISCORD_LIMITS.title),
-    description: truncate(input.executiveSummary, DISCORD_LIMITS.description),
+    title: truncate(
+      sanitizeForEmbed(`${input.title} — ${input.headline}`),
+      DISCORD_LIMITS.title,
+    ),
+    description: truncate(
+      sanitizeForEmbed(input.executiveSummary),
+      DISCORD_LIMITS.description,
+    ),
     color: EMBED_COLOR,
     fields: fields.slice(0, DISCORD_LIMITS.fields),
     footer: { text: "ihsan.co · brief generado automáticamente" },
@@ -147,7 +167,13 @@ export async function sendDiscordBrief(
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ embeds: [buildMeetingEmbed(input)] }),
+      // Discord does not resolve mentions inside embeds today, so this changes nothing
+      // right now — it is here so that moving any model-derived text into the top-level
+      // `content` field later cannot turn a poisoned brief into an @everyone ping.
+      body: JSON.stringify({
+        embeds: [buildMeetingEmbed(input)],
+        allowed_mentions: { parse: [] },
+      }),
     });
 
     if (!response.ok) {
