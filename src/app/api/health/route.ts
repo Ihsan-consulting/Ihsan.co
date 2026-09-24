@@ -1,4 +1,4 @@
-import { getEnv } from "@/lib/env";
+import { describeEnvProblems } from "@/lib/env";
 import { getAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -10,12 +10,11 @@ export const dynamic = "force-dynamic";
  * since this endpoint is reachable without authentication.
  */
 export async function GET(): Promise<Response> {
-  try {
-    getEnv();
-  } catch {
+  const problems = describeEnvProblems();
+  if (problems.length > 0) {
     console.error("health: environment validation failed");
     return Response.json(
-      { ok: false, checks: { env: false, database: false } },
+      { ok: false, checks: { env: false, database: false }, problems },
       { status: 503 },
     );
   }

@@ -27,6 +27,18 @@ let cached: Env | undefined;
  * Validated at first use rather than at import, so a missing variable surfaces as a
  * loud runtime error on the affected route instead of breaking an unrelated build step.
  */
+/**
+ * Names of the variables that fail validation, with the reason — never their values.
+ *
+ * The names are already public (`.env.example` is committed), so exposing which one is
+ * wrong costs nothing and turns "503, good luck" into an actionable answer.
+ */
+export function describeEnvProblems(): string[] {
+  const parsed = schema.safeParse(process.env);
+  if (parsed.success) return [];
+  return parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`);
+}
+
 export function getEnv(): Env {
   if (cached) return cached;
 
