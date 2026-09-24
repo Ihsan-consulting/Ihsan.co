@@ -1,123 +1,94 @@
-/* --- Estado inicial (sin grabaciones) --------------------------------- */
-
-.onboarding {
-  display: grid;
-  gap: var(--space-l);
-  padding-block: var(--space-xl) var(--space-2xl);
+.page {
+  padding-bottom: var(--sp-12);
 }
 
-.pipeline {
-  display: grid;
-  gap: var(--space-m);
-  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+/* --- Portada ----------------------------------------------------------- */
+
+.heroDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background-color: var(--ok);
+  box-shadow: 0 0 0 4px rgba(78, 217, 138, 0.14);
 }
 
-.pipeline > li {
-  padding-block-start: var(--space-s);
-  border-top: 1px solid var(--rule-strong);
+.heroDot[data-alert="true"] {
+  background-color: var(--danger);
+  box-shadow: 0 0 0 4px rgba(255, 107, 96, 0.14);
 }
 
-.pipelineStep {
-  display: block;
-  font-size: var(--step--1);
-  color: var(--accent);
-  letter-spacing: 0.1em;
+.heroSep {
+  color: var(--ink-6);
 }
 
-.pipelineTitle {
-  margin-block-start: var(--space-xs);
-  font-family: var(--font-display);
-  font-size: var(--step-1);
-  font-weight: 600;
-  letter-spacing: -0.015em;
-  color: var(--ink-strong);
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 40px;
+  padding-inline: var(--sp-7);
+  border-radius: var(--r-xl);
+  background-color: var(--accent);
+  color: #fff;
+  font-size: var(--t-md);
+  font-weight: 590;
+  letter-spacing: -0.012em;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  transition: filter var(--dur-fast) var(--ease);
 }
 
-.pipelineText {
-  margin-block-start: var(--space-2xs);
-  max-width: 34ch;
-  font-size: var(--step--1);
-  color: var(--ink-muted);
+.cta:hover {
+  filter: brightness(1.08);
+  color: #fff;
 }
 
-/* --- Tira de cifras ---------------------------------------------------- */
+.ctaGhost {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding-inline: var(--sp-6);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-xl);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-size: var(--t-md);
+  letter-spacing: -0.012em;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.ctaGhost:hover {
+  background-color: var(--surface-hover);
+  color: var(--ink);
+}
+
+/* --- Retículas --------------------------------------------------------- */
 
 .stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
-  gap: 0;
-  padding-block: var(--space-l) var(--space-xl);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.75rem), 1fr));
+  gap: var(--sp-5);
 }
 
-/* Filetes verticales entre cifras: retícula visible, sin cajas */
-.stats > * + * {
-  border-inline-start: 1px solid var(--rule);
-  padding-inline-start: var(--space-m);
-}
-
-/* --- Retícula asimétrica ---------------------------------------------- */
-
-.columns {
+.split {
   display: grid;
-  gap: var(--space-xl) var(--space-2xl);
-  padding-block-end: var(--space-2xl);
-}
-
-.main {
-  min-width: 0;
-}
-
-.recent {
-  display: flex;
-  flex-direction: column;
-  border-top: 1px solid var(--rule);
-}
-
-.more {
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-decoration: none;
-  color: var(--ink-muted);
-  border-bottom: 1px solid var(--rule-strong);
-  padding-block-end: 0.15rem;
-}
-
-.more:hover {
-  color: var(--accent);
-  border-bottom-color: currentColor;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26.25rem), 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+  margin-top: var(--sp-5);
+  scroll-margin-top: var(--sp-8);
 }
 
 .rail {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
+  gap: var(--sp-5);
   min-width: 0;
 }
 
-@media (min-width: 64rem) {
-  .columns {
-    grid-template-columns: minmax(0, 1.75fr) minmax(17rem, 0.85fr);
-  }
-
-  .rail {
-    position: sticky;
-    top: 6rem;
-    align-self: start;
-    padding-inline-start: var(--space-m);
-    border-inline-start: 1px solid var(--rule);
-  }
-}
-
-@media (max-width: 34rem) {
-  .stats {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--space-s) 0;
-  }
-
-  .stats > * + * {
-    border-inline-start: 0;
-    padding-inline-start: 0;
-  }
+.trio {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--sp-5);
+  align-items: start;
+  margin-top: var(--sp-5);
 }

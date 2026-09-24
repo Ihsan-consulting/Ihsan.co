@@ -36,6 +36,23 @@ const clock = new Intl.DateTimeFormat(LOCALE, {
 
 const relative = new Intl.RelativeTimeFormat(LOCALE, { numeric: "auto" });
 
+/**
+ * Clave de día natural en Madrid (`2026-09-24`). No se muestra nunca: sirve para
+ * agrupar por jornada sin que el desfase con UTC mueva una llamada de día.
+ */
+const dayKeyFormat = new Intl.DateTimeFormat("en-CA", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+});
+
+const hourFormat = new Intl.DateTimeFormat("en-GB", {
+  timeZone: TIME_ZONE,
+  hour: "2-digit",
+  hourCycle: "h23",
+});
+
 function parse(iso: string | null | undefined): Date | null {
   if (!iso) return null;
   const date = new Date(iso);
@@ -61,6 +78,18 @@ export function formatDateTime(iso: string | null | undefined): string {
   const date = parse(iso);
   if (!date) return "Sin fecha";
   return `${dayMonthYear.format(date)}, ${clock.format(date)}`;
+}
+
+/** Día natural en Madrid como `AAAA-MM-DD`; `null` si la fecha no es válida. */
+export function dayKey(iso: string | null | undefined): string | null {
+  const date = parse(iso);
+  return date ? dayKeyFormat.format(date) : null;
+}
+
+/** Hora actual en Madrid (0-23), para el saludo de la portada. */
+export function madridHour(): number {
+  const parsed = Number.parseInt(hourFormat.format(new Date()), 10);
+  return Number.isNaN(parsed) ? 12 : parsed;
 }
 
 /** Valor para el atributo `dateTime` de `<time>`; `undefined` si la fecha no es válida. */

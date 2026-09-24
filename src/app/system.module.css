@@ -1,70 +1,68 @@
 .screen {
   display: grid;
   align-content: center;
-  gap: var(--space-s);
+  gap: var(--sp-5);
   min-height: 60dvh;
-  padding-block: var(--space-2xl);
+  padding-block: var(--sp-12);
 }
 
 .code {
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  letter-spacing: 0.16em;
+  font-size: var(--t-xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--danger);
 }
 
 .title {
-  max-width: 16ch;
-  font-size: var(--step-4);
+  max-width: 18ch;
+  font-size: var(--t-4xl);
+  font-weight: 600;
+  letter-spacing: -0.04em;
 }
 
 .text {
-  max-width: 46ch;
-  font-size: var(--step-1);
-  color: var(--ink-muted);
+  max-width: 52ch;
+  font-size: var(--t-lg);
+  line-height: 1.55;
+  color: var(--ink-3);
 }
 
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
-  margin-block-start: var(--space-s);
+  gap: var(--sp-3);
+  margin-top: var(--sp-3);
 }
 
 .link {
   display: inline-flex;
   align-items: center;
-  padding: 0.55rem 1.1rem;
-  border: 1px solid var(--ink-strong);
-  border-radius: var(--r-sm);
-  background: none;
-  font-size: var(--step--1);
-  text-decoration: none;
-  color: var(--ink-strong);
+  height: 36px;
+  padding-inline: var(--sp-6);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-xl);
+  background-color: var(--surface);
+  color: var(--ink);
+  font-size: var(--t-sm);
   cursor: pointer;
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+  transition: background-color var(--dur-fast) var(--ease);
 }
 
 .link:hover {
-  background-color: var(--ink-strong);
-  color: var(--ink-invert);
-  transform: translateY(-1px);
-}
-
-.link:active {
-  transform: translateY(0);
+  background-color: var(--surface-hover);
+  color: var(--ink);
 }
 
 .detail {
   max-width: 60ch;
-  margin-block-start: var(--space-m);
-  padding: var(--space-s);
-  border-inline-start: 3px solid var(--danger);
+  margin-top: var(--sp-5);
+  padding: var(--sp-5);
+  border: 1px solid rgba(255, 107, 96, 0.28);
+  border-radius: var(--r-lg);
   background-color: var(--danger-wash);
   font-family: var(--font-mono);
-  font-size: var(--step--2);
+  font-size: var(--t-2xs);
   line-height: 1.55;
   color: var(--danger);
   overflow-wrap: anywhere;
@@ -75,19 +73,25 @@
 .skeleton {
   display: flex;
   flex-direction: column;
-  gap: var(--space-m);
-  padding-block: var(--space-2xl);
+  gap: var(--sp-5);
+  padding-block: var(--sp-11);
 }
 
 .skelLine,
 .skelBlock {
-  background-color: var(--paper-sunk);
-  border-radius: var(--r-sm);
+  border-radius: var(--r-lg);
+  background-image: linear-gradient(
+    90deg,
+    var(--shimmer-from),
+    var(--shimmer-to),
+    var(--shimmer-from)
+  );
+  background-size: 200% 100%;
 }
 
 .skelLine {
-  height: 1.1rem;
-  max-width: 22rem;
+  height: 1.25rem;
+  max-width: 20rem;
 }
 
 .skelBlock {
@@ -97,17 +101,6 @@
 @media (prefers-reduced-motion: no-preference) {
   .skelLine,
   .skelBlock {
-    animation: pulse 1.5s var(--ease) infinite;
-  }
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.45;
+    animation: shimmer 1.6s linear infinite;
   }
 }

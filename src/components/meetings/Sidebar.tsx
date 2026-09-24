@@ -1,30 +1,28 @@
-import Link from "next/link";
+import { formatDateTime, initials } from "@/components/formatting";
+import { EmptyState, StatusBadge } from "@/components/ui/primitives";
+import type { MeetingDelivery, MeetingInvitee } from "@/lib/queries/meetings";
 
-import { formatDateTime, formatRelative, initials } from "@/components/formatting";
-import { EmptyState, SectionHead, StatusBadge } from "@/components/ui/primitives";
-import type { MeetingDelivery, MeetingInvitee, ProblemDelivery } from "@/lib/queries/meetings";
-
-import styles from "./meetings.module.css";
+import styles from "./rail.module.css";
 
 export function InviteeList({ invitees }: { invitees: MeetingInvitee[] }) {
   const external = invitees.filter((person) => person.isExternal).length;
 
   return (
     <section aria-labelledby="asistentes" className={styles.railPanel}>
-      <SectionHead
-        id="asistentes"
-        title="Asistentes"
-        count={invitees.length}
-        action={
-          external > 0 ? <span className={styles.briefStamp}>{external} externos</span> : undefined
-        }
-      />
+      <div className={styles.railHead}>
+        <h2 id="asistentes" className={styles.railTitle}>
+          Asistentes
+        </h2>
+        <span className={`num ${styles.railCount}`}>
+          {invitees.length}
+          {external > 0 ? ` · ${external} externos` : ""}
+        </span>
+      </div>
 
       {invitees.length === 0 ? (
-        <EmptyState
-          title="Sin asistentes"
-          body="El webhook no incluyó la lista de participantes de esta grabación."
-        />
+        <p className={styles.railEmpty}>
+          El webhook no incluyó la lista de participantes de esta grabación.
+        </p>
       ) : (
         <ul className={styles.people}>
           {invitees.map((person) => (
@@ -56,7 +54,12 @@ export function InviteeList({ invitees }: { invitees: MeetingInvitee[] }) {
 export function DeliveryTrail({ deliveries }: { deliveries: MeetingDelivery[] }) {
   return (
     <section aria-labelledby="entregas" className={styles.railPanel}>
-      <SectionHead id="entregas" title="Entregas" count={deliveries.length} />
+      <div className={styles.railHead}>
+        <h2 id="entregas" className={styles.railTitle}>
+          Entregas
+        </h2>
+        <span className={`num ${styles.railCount}`}>{deliveries.length}</span>
+      </div>
 
       {deliveries.length === 0 ? (
         <EmptyState
@@ -73,7 +76,9 @@ export function DeliveryTrail({ deliveries }: { deliveries: MeetingDelivery[] })
               </div>
               {delivery.target ? <p className={styles.deliveryTarget}>{delivery.target}</p> : null}
               <p className={styles.deliveryMeta}>
-                <span className="num">{delivery.attempts} intentos</span>
+                <span className="num">
+                  {delivery.attempts} intento{delivery.attempts === 1 ? "" : "s"}
+                </span>
                 <span className="num">{formatDateTime(delivery.sentAt ?? delivery.updatedAt)}</span>
               </p>
               {delivery.error ? <p className={styles.deliveryError}>{delivery.error}</p> : null}
@@ -82,34 +87,5 @@ export function DeliveryTrail({ deliveries }: { deliveries: MeetingDelivery[] })
         </ul>
       )}
     </section>
-  );
-}
-
-/** Salud de las entregas en el panel: solo lo que está roto o esperando. */
-export function DeliveryHealth({ deliveries }: { deliveries: ProblemDelivery[] }) {
-  if (deliveries.length === 0) {
-    return (
-      <EmptyState
-        title="Todo entregado"
-        body="Ninguna publicación a Discord está fallando ni esperando en cola."
-      />
-    );
-  }
-
-  return (
-    <ul className={styles.healthList}>
-      {deliveries.map((delivery) => (
-        <li key={delivery.id} className={styles.healthItem} data-status={delivery.status}>
-          <div className={styles.healthHead}>
-            <StatusBadge status={delivery.status} />
-            <span className={`num ${styles.healthWhen}`}>{formatRelative(delivery.updatedAt)}</span>
-          </div>
-          <Link href={`/meetings/${delivery.recordingId}`} className={styles.healthLink}>
-            {delivery.meetingTitle}
-          </Link>
-          {delivery.error ? <p className={styles.deliveryError}>{delivery.error}</p> : null}
-        </li>
-      ))}
-    </ul>
   );
 }

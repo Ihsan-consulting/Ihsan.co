@@ -13,7 +13,7 @@ export default function NotFound() {
       </p>
       <div className={styles.actions}>
         <Link href="/meetings" className={styles.link}>
-          Ver todas las reuniones
+          Ver todas las llamadas
         </Link>
         <Link href="/" className={styles.link}>
           Ir al panel

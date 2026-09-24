@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
-import { SiteHeader } from "@/components/chrome/SiteHeader";
+import { AppShell } from "@/components/chrome/AppShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -26,8 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <a className="srOnly" href="#contenido">
           Saltar al contenido
         </a>
-        <SiteHeader />
-        <main id="contenido">{children}</main>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

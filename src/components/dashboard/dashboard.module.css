@@ -1,0 +1,355 @@
+/* --- Gráfico de llamadas y tensión ------------------------------------- */
+
+.chartLegend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-8);
+}
+
+.chartValue {
+  font-size: var(--t-3xl);
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+
+.chartValue[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.chartCaption {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-1);
+  font-size: var(--t-s);
+  color: var(--ink-4);
+}
+
+.chartKeyLine {
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background-color: var(--ink);
+}
+
+.chartKeyLine[data-tone="danger"] {
+  background-color: var(--danger);
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: 9.375rem;
+  margin-top: var(--sp-7);
+}
+
+.chartGrid {
+  stroke: var(--line-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chartArea {
+  fill: rgba(245, 245, 247, 0.06);
+}
+
+.chartLine {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chartLineTense {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chartAxis {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sp-1);
+  margin-top: var(--sp-3);
+  font-size: var(--t-2xs);
+  color: var(--ink-5);
+}
+
+/* --- Barras de tono ---------------------------------------------------- */
+
+.bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+}
+
+.barHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.barLabel {
+  font-size: var(--t-base);
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.barValue {
+  margin-left: auto;
+  font-size: var(--t-xs);
+  color: var(--ink-4);
+}
+
+.barValue[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.barValue[data-tone="warn"] {
+  color: var(--warn);
+}
+
+.barValue[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.barTrack {
+  display: block;
+  overflow: hidden;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 4px;
+  background-color: var(--surface-raised-2);
+}
+
+.barFill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background-color: var(--ink-3);
+}
+
+.barFill[data-tone="ok"] {
+  background-color: var(--ok);
+}
+
+.barFill[data-tone="warn"] {
+  background-color: var(--warn);
+}
+
+.barFill[data-tone="danger"] {
+  background-color: var(--danger);
+}
+
+/* --- Carga del equipo -------------------------------------------------- */
+
+.team {
+  display: flex;
+  flex-direction: column;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding-block: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.team > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.teamAvatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-2);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+}
+
+.teamBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.teamName {
+  font-size: var(--t-md);
+  font-weight: 550;
+  letter-spacing: -0.012em;
+}
+
+.teamNote {
+  margin-top: 2px;
+  font-size: var(--t-xs);
+  color: var(--ink-4);
+}
+
+.teamNote[data-alert="true"] {
+  color: var(--danger);
+}
+
+.teamCount {
+  flex: none;
+  font-size: var(--t-s);
+  color: var(--ink-4);
+}
+
+/* --- Pendientes de envío ----------------------------------------------- */
+
+.sendList {
+  display: flex;
+  flex-direction: column;
+}
+
+.sendRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding-block: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.sendList > li:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.sendBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sendTop {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sp-3);
+}
+
+.sendTitle {
+  overflow: hidden;
+  font-size: var(--t-md);
+  font-weight: 550;
+  letter-spacing: -0.012em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sendLabel {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--t-xs);
+  color: var(--ink-4);
+}
+
+.sendTrack {
+  display: block;
+  overflow: hidden;
+  height: 4px;
+  margin-top: var(--sp-2);
+  border-radius: 2px;
+  background-color: var(--surface-raised-2);
+}
+
+.sendFill {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background-color: var(--warn);
+}
+
+.sendFill[data-status="failed"] {
+  background-color: var(--danger);
+}
+
+.sendMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-top: var(--sp-2);
+  font-size: var(--t-xs);
+  color: var(--ink-4);
+}
+
+.sendMeta [data-status="failed"] {
+  color: var(--danger);
+}
+
+.sendMeta [data-status="pending"] {
+  color: var(--warn);
+}
+
+.sendSep {
+  color: var(--ink-6);
+}
+
+.sendError {
+  margin-top: var(--sp-2);
+  padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-sm);
+  background-color: var(--danger-wash);
+  font-family: var(--font-mono);
+  font-size: var(--t-2xs);
+  line-height: 1.5;
+  color: var(--danger);
+  overflow-wrap: anywhere;
+}
+
+.sendCta {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 28px;
+  padding-inline: 11px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-md);
+  background-color: var(--surface-raised);
+  color: var(--ink);
+  font-size: var(--t-xs);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.sendCta:hover {
+  background-color: var(--neutral-wash);
+  color: var(--ink);
+}
+
+.sendCta[data-status="failed"] {
+  border-color: rgba(255, 107, 96, 0.35);
+  color: var(--danger);
+}
+
+/* --- Estados vacíos de las tarjetas ------------------------------------ */
+
+.emptyLine {
+  padding-block: var(--sp-9);
+  font-size: var(--t-s);
+  color: var(--ink-4);
+  text-align: center;
+}
+
+.logEmpty {
+  padding-block: var(--sp-8) var(--sp-9);
+  font-size: var(--t-s);
+  line-height: 1.55;
+  color: var(--ink-4);
+  text-align: center;
+}

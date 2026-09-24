@@ -52,7 +52,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
         <p className="kicker">Acceso restringido</p>
         <h1 className={styles.title}>Panel interno</h1>
         <p className={styles.lede}>
-          Reuniones, briefs y entregas del equipo. Solo para Dante, Oriol y Guillermo.
+          Llamadas, briefs y entregas del equipo. Solo para Omar, Mehdi y Yousef.
         </p>
 
         {/*

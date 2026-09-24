@@ -1,46 +1,77 @@
 import { formatDateTime, formatSentiment } from "@/components/formatting";
-import { EmptyState, SectionHead, Tag } from "@/components/ui/primitives";
+import { EmptyState, Tag, type Tone } from "@/components/ui/primitives";
 import type { MeetingBrief } from "@/lib/queries/meetings";
 
-import styles from "./meetings.module.css";
+import styles from "./detail.module.css";
 
-type BriefPanelProps = {
-  brief: MeetingBrief | null;
+const SENTIMENT_TONES: Record<string, Tone> = {
+  positive: "ok",
+  positivo: "ok",
+  neutral: "neutral",
+  neutro: "neutral",
+  mixed: "warn",
+  mixto: "warn",
+  negative: "danger",
+  negativo: "danger",
 };
 
-type ListBlockProps = {
-  title: string;
-  items: string[];
-  tone: "decision" | "risk" | "step";
-};
+function toneOf(value: string | null): Tone {
+  if (!value) return "neutral";
+  return SENTIMENT_TONES[value.trim().toLowerCase()] ?? "neutral";
+}
 
-function ListBlock({ title, items, tone }: ListBlockProps) {
+/** Lista de puntos del resumen: decisiones y próximos pasos del brief. */
+function Points({ title, items }: { title: string; items: string[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className={styles.briefBlock} data-tone={tone}>
-      <h3 className={styles.briefBlockTitle}>{title}</h3>
-      <ul className={styles.briefList}>
+    <div className={styles.points}>
+      <h3 className={styles.blockTitle}>{title}</h3>
+      <ul className={styles.pointList}>
         {items.map((item, index) => (
-          <li key={`${tone}-${index}`} className={styles.briefListItem}>
-            <span className={`num ${styles.briefListIndex}`} aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </span>
+          <li key={`${title}-${String(index)}`} className={styles.point}>
+            <span className={styles.pointDot} aria-hidden="true" />
             <span>{item}</span>
           </li>
         ))}
       </ul>
-    </section>
+    </div>
+  );
+}
+
+/** Riesgos detectados, con el tratamiento de cita del diseño. */
+function Risks({ items }: { items: string[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <div className={styles.risks}>
+      <h3 className={styles.blockTitle}>Riesgos detectados</h3>
+      <div className={styles.riskList}>
+        {items.map((item, index) => (
+          <article key={`riesgo-${String(index)}`} className={styles.risk}>
+            <p className={styles.riskKind}>Riesgo</p>
+            <p className={styles.riskText}>{item}</p>
+          </article>
+        ))}
+      </div>
+      <p className={styles.riskNote}>
+        El brief señala el riesgo, no propone la respuesta: esa decisión sigue siendo del equipo.
+      </p>
+    </div>
   );
 }
 
 /** El brief generado por IA. Cuando aún no existe, el panel lo dice sin romperse. */
-export function BriefPanel({ brief }: BriefPanelProps) {
+export function BriefPanel({ brief }: { brief: MeetingBrief | null }) {
   if (!brief) {
     return (
       <section aria-labelledby="brief" className={styles.panel}>
-        <SectionHead id="brief" title="Brief de IA" />
+        <h2 id="brief" className={styles.panelTitle}>
+          Resumen
+        </h2>
         <EmptyState
+          size="block"
+          tone="warn"
           title="Todavía no hay brief"
           body="La grabación está guardada, pero el resumen en español aún no se ha generado. Aparecerá aquí en cuanto el pipeline lo publique."
           hint="Mientras tanto puedes leer el resumen original de Fathom más abajo."
@@ -58,28 +89,23 @@ export function BriefPanel({ brief }: BriefPanelProps) {
 
   return (
     <section aria-labelledby="brief" className={styles.panel}>
-      <SectionHead
-        id="brief"
-        title="Brief de IA"
-        action={
-          <span className={styles.briefStamp}>
-            {formatDateTime(brief.createdAt)} · {brief.model}
-          </span>
-        }
-      />
+      <div className={styles.panelHead}>
+        <h2 id="brief" className={styles.panelTitle}>
+          Resumen
+        </h2>
+        <span className={styles.stamp}>
+          {formatDateTime(brief.createdAt)} · {brief.model}
+        </span>
+      </div>
 
-      {brief.headline ? <p className={styles.briefHeadline}>{brief.headline}</p> : null}
+      {brief.headline ? <p className={styles.headline}>{brief.headline}</p> : null}
 
-      {sentiment ? (
-        <p className={styles.briefTags}>
-          <Tag tone={brief.sentiment === "negative" ? "danger" : "neutral"}>Tono: {sentiment}</Tag>
-          <Tag>{brief.language}</Tag>
-        </p>
-      ) : null}
+      <p className={styles.tags}>
+        {sentiment ? <Tag tone={toneOf(brief.sentiment)}>Tono: {sentiment}</Tag> : null}
+        <Tag>{brief.language}</Tag>
+      </p>
 
-      {brief.executiveSummary ? (
-        <p className={styles.briefSummary}>{brief.executiveSummary}</p>
-      ) : null}
+      {brief.executiveSummary ? <p className={styles.summary}>{brief.executiveSummary}</p> : null}
 
       {isEmpty ? (
         <EmptyState
@@ -88,11 +114,9 @@ export function BriefPanel({ brief }: BriefPanelProps) {
         />
       ) : null}
 
-      <div className={styles.briefBlocks}>
-        <ListBlock title="Decisiones" items={brief.keyDecisions} tone="decision" />
-        <ListBlock title="Riesgos" items={brief.risks} tone="risk" />
-        <ListBlock title="Próximos pasos" items={brief.nextSteps} tone="step" />
-      </div>
+      <Points title="Decisiones" items={brief.keyDecisions} />
+      <Risks items={brief.risks} />
+      <Points title="Próximos pasos sugeridos" items={brief.nextSteps} />
     </section>
   );
 }
@@ -111,11 +135,13 @@ export function SourceSummary({ markdown, template }: SourceSummaryProps) {
 
   return (
     <section aria-labelledby="fathom" className={styles.panel}>
-      <SectionHead
-        id="fathom"
-        title="Resumen original de Fathom"
-        action={template ? <span className={styles.briefStamp}>{template}</span> : undefined}
-      />
+      <div className={styles.panelHead}>
+        <h2 id="fathom" className={styles.panelTitle}>
+          Resumen original de Fathom
+        </h2>
+        {template ? <span className={styles.stamp}>{template}</span> : null}
+      </div>
+
       <details className={styles.disclosure}>
         <summary className={styles.disclosureSummary}>
           Ver el texto tal cual lo envió Fathom

@@ -1,0 +1,230 @@
+/* --- Ficha de llamada --------------------------------------------------- */
+
+.card {
+  display: flex;
+  gap: var(--sp-7);
+  padding: var(--sp-7);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2xl);
+  background-color: var(--surface);
+  transition: border-color var(--dur) var(--ease), background-color var(--dur) var(--ease);
+}
+
+.card:hover {
+  border-color: var(--line-hover);
+  background-color: #161618;
+}
+
+.card[data-alert="true"] {
+  border-color: rgba(255, 107, 96, 0.32);
+}
+
+.card[data-active="true"] {
+  border-color: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent-soft);
+}
+
+.thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  flex: none;
+  width: 8.25rem;
+  height: 4.625rem;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-sunk);
+  color: var(--ink);
+}
+
+.thumb:hover {
+  border-color: var(--line-hover);
+  color: var(--ink);
+}
+
+.thumb[data-static="true"] {
+  opacity: 0.55;
+}
+
+.thumbPlay {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-pill);
+  background-color: rgba(245, 245, 247, 0.95);
+  color: var(--ink-invert);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.thumbTime {
+  position: absolute;
+  right: var(--sp-2);
+  bottom: var(--sp-2);
+  display: flex;
+  align-items: center;
+  height: 18px;
+  padding-inline: var(--sp-2);
+  border-radius: 5px;
+  background-color: rgba(0, 0, 0, 0.78);
+  color: #fff;
+  font-size: var(--t-2xs);
+  font-weight: 500;
+}
+
+.thumbAlert {
+  position: absolute;
+  top: var(--sp-2);
+  left: var(--sp-2);
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background-color: var(--danger);
+  box-shadow: 0 0 0 2px var(--surface-sunk);
+}
+
+.cardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4);
+}
+
+.cardTitle {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: -0.022em;
+}
+
+.cardLink {
+  color: var(--ink);
+}
+
+.cardLink:hover {
+  color: var(--accent-ink);
+}
+
+.cardBrand {
+  font-size: var(--t-sm);
+  letter-spacing: -0.008em;
+  color: var(--ink-4);
+}
+
+.cardSpacer {
+  flex: 1;
+}
+
+.cardWhen {
+  font-size: var(--t-s);
+  letter-spacing: -0.005em;
+  color: var(--ink-4);
+  white-space: nowrap;
+}
+
+.cardSummary {
+  display: -webkit-box;
+  overflow: hidden;
+  margin-top: var(--sp-4);
+  font-size: var(--t-base);
+  line-height: 1.55;
+  color: var(--ink-2);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.cardPending {
+  margin-top: var(--sp-4);
+  font-size: var(--t-s);
+  color: var(--ink-5);
+}
+
+.cardFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-5);
+  margin-top: var(--sp-6);
+}
+
+.cardTone {
+  --tone-ink: var(--ink-2);
+
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--t-s);
+  font-weight: 500;
+  color: var(--tone-ink);
+}
+
+.cardTone[data-tone="ok"] {
+  --tone-ink: var(--ok);
+}
+
+.cardTone[data-tone="warn"] {
+  --tone-ink: var(--warn);
+}
+
+.cardTone[data-tone="danger"] {
+  --tone-ink: var(--danger);
+}
+
+.cardToneDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background-color: currentColor;
+}
+
+.cardMeta {
+  position: relative;
+  padding-left: var(--sp-5);
+  font-size: var(--t-s);
+  color: var(--ink-4);
+}
+
+.cardMeta::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 1px;
+  height: 11px;
+  background-color: var(--ink-6);
+  transform: translateY(-50%);
+}
+
+.cardMeta[data-alert="true"] {
+  color: var(--ink-2);
+}
+
+.cardAvatar {
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-3);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+}
+
+@media (max-width: 40rem) {
+  .card {
+    flex-direction: column;
+    gap: var(--sp-5);
+  }
+
+  .thumb {
+    width: 100%;
+    height: 5.5rem;
+  }
+}

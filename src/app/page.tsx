@@ -1,10 +1,18 @@
 import Link from "next/link";
 
-import { formatLongDate } from "@/components/formatting";
-import { MeetingCard } from "@/components/meetings/MeetingCard";
-import { OpenActionItemList } from "@/components/meetings/Commitments";
-import { DeliveryHealth } from "@/components/meetings/Sidebar";
-import { EmptyState, PageHeader, SectionHead, StatTile } from "@/components/ui/primitives";
+import { DeliveryLog, PendingDeliveries } from "@/components/dashboard/Deliveries";
+import { DecisionQueue, TodayList } from "@/components/dashboard/DecisionQueue";
+import { TeamLoadList, ToneBars, TrendChart } from "@/components/dashboard/Signals";
+import { formatLongDate, madridHour } from "@/components/formatting";
+import {
+  WEEKS,
+  teamLoad,
+  todaysMeetings,
+  toneBreakdown,
+  weekTrend,
+  weeklySeries,
+} from "@/components/meetings/aggregate";
+import { Card, PageHeader, StatTile } from "@/components/ui/primitives";
 import {
   getDashboardTotals,
   listMeetings,
@@ -16,136 +24,157 @@ import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
+function greeting(hour: number): string {
+  if (hour < 12) return "Buenos días";
+  if (hour < 20) return "Buenas tardes";
+  return "Buenas noches";
+}
+
 export default async function DashboardPage() {
-  const totals = await getDashboardTotals();
-  const today = formatLongDate(new Date().toISOString());
-
-  // Estado inicial real: las tablas están vacías hasta el primer webhook.
-  if (totals.meetingsTotal === 0) {
-    return (
-      <div className="wrap">
-        <PageHeader
-          kicker="Panel interno"
-          title="Aún no ha entrado ninguna grabación"
-          lede="El panel está conectado y esperando. En cuanto Fathom envíe la primera reunión verás aquí el brief, los compromisos con el cliente y si el resumen llegó a Discord."
-          aside={<span>{today}</span>}
-        />
-
-        <div className={styles.onboarding}>
-          <EmptyState
-            size="block"
-            title="Esperando el primer webhook"
-            body="Cada grabación recorre el mismo camino: Fathom la envía, se guarda en Supabase, se genera un brief en español y se publica en Discord. Este panel muestra ese recorrido de principio a fin."
-            hint="No hay nada que configurar desde esta pantalla."
-          />
-
-          <ol className={styles.pipeline}>
-            <li>
-              <span className={`num ${styles.pipelineStep}`}>01</span>
-              <p className={styles.pipelineTitle}>Fathom graba</p>
-              <p className={styles.pipelineText}>
-                La llamada termina y Fathom dispara el webhook con transcripción, asistentes y
-                tareas detectadas.
-              </p>
-            </li>
-            <li>
-              <span className={`num ${styles.pipelineStep}`}>02</span>
-              <p className={styles.pipelineTitle}>Se genera el brief</p>
-              <p className={styles.pipelineText}>
-                Titular, resumen ejecutivo, decisiones, riesgos y próximos pasos, en español.
-              </p>
-            </li>
-            <li>
-              <span className={`num ${styles.pipelineStep}`}>03</span>
-              <p className={styles.pipelineTitle}>Llega a Discord</p>
-              <p className={styles.pipelineText}>
-                Si una publicación falla, aparecerá marcada en rojo en esta misma pantalla.
-              </p>
-            </li>
-          </ol>
-        </div>
-      </div>
-    );
-  }
-
-  const [recent, openItems, problemDeliveries] = await Promise.all([
-    listMeetings(6),
+  const [totals, meetings, openItems, problemDeliveries] = await Promise.all([
+    getDashboardTotals(),
+    listMeetings(200),
     listOpenActionItems(6),
-    listProblemDeliveries(5),
+    listProblemDeliveries(4),
   ]);
 
+  const series = weeklySeries(meetings);
+  const today = todaysMeetings(meetings);
+  const tone = toneBreakdown(meetings);
+  const team = teamLoad(meetings).slice(0, 5);
+
+  const hasMeetings = totals.meetingsTotal > 0;
+  const callsThisWeek = series.meetings[WEEKS - 1] ?? 0;
+  const tenseThisWeek = series.tense[WEEKS - 1] ?? 0;
+  const todayLabel = formatLongDate(new Date().toISOString());
+
   return (
-    <div className="wrap">
+    <div className={`wrap ${styles.page}`}>
       <PageHeader
-        kicker="Panel interno"
-        title="Lo que pasó en las llamadas"
-        lede="Un vistazo a las reuniones grabadas, lo que quedó comprometido con cliente y si los resúmenes llegaron a Discord."
-        aside={<span>{today}</span>}
+        kicker={
+          <>
+            <span
+              className={styles.heroDot}
+              data-alert={totals.deliveriesFailed > 0 ? "true" : undefined}
+              aria-hidden="true"
+            />
+            <span>{todayLabel}</span>
+            <span className={styles.heroSep} aria-hidden="true">
+              ·
+            </span>
+            <span>{greeting(madridHour())}</span>
+          </>
+        }
+        title={hasMeetings ? "Lo que pasó en las llamadas" : "El panel está conectado"}
+        muted={hasMeetings ? "y qué queda por cerrar." : "y esperando la primera grabación."}
+        lede={
+          hasMeetings
+            ? "Cada llamada grabada con Fathom se resume en español, deja sus compromisos con cliente y se publica en Discord. Aquí está el recorrido completo."
+            : "En cuanto Fathom envíe la primera reunión verás aquí el brief, los compromisos con cliente y si el resumen llegó a Discord. No hay nada que configurar desde esta pantalla."
+        }
+        actions={
+          <>
+            <Link href="/meetings" className={styles.cta}>
+              Ver todas las llamadas <span aria-hidden="true">→</span>
+            </Link>
+            <a href="#cola" className={styles.ctaGhost}>
+              Ir a la cola de decisiones
+            </a>
+          </>
+        }
       />
 
       <section aria-labelledby="cifras" className={styles.stats}>
         <h2 id="cifras" className="srOnly">
-          Cifras del negocio
+          Cifras del panel
         </h2>
         <StatTile
-          label="Reuniones registradas"
+          label="Llamadas registradas"
           value={totals.meetingsTotal}
+          trend={weekTrend(series.meetings)}
+          trendLabel="Diferencia con la semana anterior"
           note={`${totals.meetingsLastWeek} en los últimos 7 días`}
+          series={series.meetings}
+          href="/meetings"
         />
         <StatTile
           label="Compromisos abiertos"
           value={totals.actionItemsOpen}
           tone={totals.actionItemsOpen > 0 ? "accent" : "ok"}
+          trend={weekTrend(series.openItems)}
+          trendLabel="Diferencia con la semana anterior"
           note="Pendientes con cliente"
+          series={series.openItems}
         />
         <StatTile
           label="Briefs pendientes"
           value={totals.briefsPending}
           tone={totals.briefsPending > 0 ? "warn" : "ok"}
+          trend={weekTrend(series.withoutBrief)}
+          trendLabel="Diferencia con la semana anterior"
           note="Grabaciones sin resumen de IA"
+          series={series.withoutBrief}
         />
         <StatTile
           label="Entregas fallidas"
           value={totals.deliveriesFailed}
           tone={totals.deliveriesFailed > 0 ? "danger" : "ok"}
-          emphasis={totals.deliveriesFailed > 0}
+          trend={weekTrend(series.failed)}
+          trendLabel="Diferencia con la semana anterior"
           note={
             totals.deliveriesPending > 0 ? `${totals.deliveriesPending} más en cola` : "Nada en cola"
           }
+          series={series.failed}
         />
       </section>
 
-      <div className={styles.columns}>
-        <section aria-labelledby="ultimas" className={styles.main}>
-          <SectionHead
-            id="ultimas"
-            title="Últimas reuniones"
-            action={
-              <Link href="/meetings" className={styles.more}>
-                Ver todas
-              </Link>
-            }
-          />
-          <ol className={styles.recent}>
-            {recent.map((meeting) => (
-              <li key={meeting.recordingId}>
-                <MeetingCard meeting={meeting} />
-              </li>
-            ))}
-          </ol>
-        </section>
+      <div className={styles.split} id="cola">
+        <Card
+          id="cola-decisiones"
+          title="Cola de decisiones"
+          meta={`${openItems.length} sin cerrar`}
+          aside="De lo más reciente a lo más antiguo"
+        >
+          <DecisionQueue items={openItems} />
+        </Card>
 
-        <aside className={styles.rail} aria-label="Pendientes y entregas">
-          <section aria-labelledby="pendientes">
-            <SectionHead id="pendientes" title="Pendiente con cliente" />
-            <OpenActionItemList items={openItems} />
-          </section>
+        <div className={styles.rail}>
+          <Card id="tension" title="Llamadas y tensión" aside={`Últimas ${WEEKS} semanas`}>
+            <TrendChart
+              calls={series.meetings}
+              tense={series.tense}
+              callsThisWeek={callsThisWeek}
+              tenseThisWeek={tenseThisWeek}
+            />
+          </Card>
 
-          <section aria-labelledby="salud">
-            <SectionHead id="salud" title="Salud de entregas" />
-            <DeliveryHealth deliveries={problemDeliveries} />
-          </section>
-        </aside>
+          <Card id="tono" title="Tono de las llamadas" aside="Todas las grabaciones">
+            <ToneBars slices={tone} />
+          </Card>
+
+          <Card id="equipo" title="Carga del equipo" aside="Por quién grabó">
+            <TeamLoadList rows={team} />
+          </Card>
+        </div>
+      </div>
+
+      <div className={styles.trio}>
+        <Card id="hoy" title="Hoy" meta={`${today.length} llamadas`} flush>
+          <TodayList meetings={today} />
+        </Card>
+
+        <Card
+          id="envios"
+          title="Pendientes de envío"
+          meta={`${problemDeliveries.length} con incidencia`}
+          flush
+        >
+          <PendingDeliveries deliveries={problemDeliveries} />
+        </Card>
+
+        <Card id="log" title="Envíos registrados" meta="Log" flush>
+          <DeliveryLog />
+        </Card>
       </div>
     </div>
   );
