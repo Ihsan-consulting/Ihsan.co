@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { SESSION_COOKIE_NAME, verifySessionToken } from "@/lib/auth/session";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const secret = process.env.SESSION_SECRET;
   if (!secret) {
     return new NextResponse("Server misconfigured", { status: 500 });
