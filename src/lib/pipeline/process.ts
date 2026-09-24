@@ -242,6 +242,35 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     const context = await loadContext(db, params.recordingId);
     if (!context) return await fail(db, params, "meeting_not_found");
 
+    // Re-running is routine — the backfill button re-walks every meeting. Without these
+    // two guards a second pass would pay Anthropic for a brief that already exists and,
+    // worse, post the same brief to Discord again. Only the missing work should happen.
+    const [existingInsight, existingDelivery] = await Promise.all([
+      db
+        .from("meeting_insights")
+        .select("recording_id")
+        .eq("recording_id", params.recordingId)
+        .maybeSingle(),
+      db
+        .from("deliveries")
+        .select("status")
+        .eq("recording_id", params.recordingId)
+        .eq("channel", CHANNEL)
+        .maybeSingle(),
+    ]);
+
+    const alreadyBriefed = existingInsight.data !== null;
+    const alreadyDelivered = existingDelivery.data?.status === "sent";
+
+    if (alreadyBriefed) {
+      // Nothing left but the Drive mirror, which skips itself when the doc exists.
+      await syncGoogleDoc(db, params.recordingId, context, null);
+      if (alreadyDelivered) {
+        await stampEvent(db, params.webhookId, null);
+        return { ok: true, recordingId: params.recordingId };
+      }
+    }
+
     const brief = await generateMeetingBrief({
       title: context.title,
       transcript: context.transcript,

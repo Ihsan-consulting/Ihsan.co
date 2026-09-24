@@ -63,14 +63,17 @@ export async function POST(): Promise<Response> {
     db.from("meeting_insights").select("recording_id"),
     db
       .from("meetings")
-      .select("recording_id")
+      .select("recording_id, google_doc_id")
       .order("recording_start_time", { ascending: false, nullsFirst: false }),
   ]);
 
   const done = new Set((withBrief ?? []).map((row) => row.recording_id));
+  // A meeting still needs a pass if it has no brief OR no Drive document. Keying only on
+  // the brief meant that once every brief existed the route became a no-op, and documents
+  // could never be created for meetings summarised before Drive was configured.
   const pending = (allMeetings ?? [])
-    .map((row) => row.recording_id)
-    .filter((id) => !done.has(id));
+    .filter((row) => !done.has(row.recording_id) || row.google_doc_id === null)
+    .map((row) => row.recording_id);
 
   const queued = pending.slice(0, MAX_BRIEFS_PER_RUN);
   if (queued.length > 0) {
