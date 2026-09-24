@@ -1,0 +1,261 @@
+/*
+ * ihsan.co — panel interno.
+ * Dirección visual: editorial suizo sobre papel. Retícula estrecha, filetes finos,
+ * titulares en serif con contraste de escala fuerte, datos en monoespaciada tabular.
+ * Un solo acento (bermellón) para énfasis editorial; el color semántico se reserva
+ * para el estado de las entregas y los riesgos.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Papel y tinta */
+  --paper: oklch(97.6% 0.007 85);
+  --paper-raised: oklch(99.5% 0.003 90);
+  --paper-sunk: oklch(94.4% 0.01 84);
+  --paper-invert: oklch(23% 0.016 62);
+
+  --ink: oklch(22% 0.015 60);
+  --ink-strong: oklch(13% 0.02 60);
+  --ink-muted: oklch(47% 0.013 62);
+  --ink-faint: oklch(63% 0.011 66);
+  --ink-invert: oklch(96% 0.006 85);
+
+  --rule: oklch(89% 0.008 78);
+  --rule-strong: oklch(75% 0.013 72);
+
+  /* Acento editorial */
+  --accent: oklch(52% 0.168 33);
+  --accent-strong: oklch(42% 0.155 33);
+  --accent-wash: oklch(95% 0.033 42);
+
+  /* Semántico: estado de entrega y riesgo */
+  --ok: oklch(45% 0.12 158);
+  --ok-wash: oklch(95% 0.045 158);
+  --warn: oklch(50% 0.115 72);
+  --warn-wash: oklch(95.5% 0.055 85);
+  --danger: oklch(47% 0.19 27);
+  --danger-wash: oklch(94.5% 0.05 27);
+
+  /* Tipografía: serif de titular + sans neutra + mono tabular */
+  --font-display: ui-serif, "Iowan Old Style", "Palatino Linotype", Palatino,
+    "Book Antiqua", Georgia, "Times New Roman", serif;
+  --font-text: ui-sans-serif, system-ui, "Segoe UI", Inter, Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", SFMono-Regular, "JetBrains Mono",
+    Menlo, Consolas, monospace;
+
+  /* Escala tipográfica fluida */
+  --step--2: clamp(0.688rem, 0.676rem + 0.05vw, 0.72rem);
+  --step--1: clamp(0.79rem, 0.771rem + 0.08vw, 0.84rem);
+  --step-0: clamp(0.938rem, 0.915rem + 0.1vw, 1rem);
+  --step-1: clamp(1.1rem, 1.05rem + 0.22vw, 1.26rem);
+  --step-2: clamp(1.3rem, 1.2rem + 0.44vw, 1.62rem);
+  --step-3: clamp(1.6rem, 1.4rem + 0.85vw, 2.2rem);
+  --step-4: clamp(2.1rem, 1.68rem + 1.75vw, 3.35rem);
+  --step-5: clamp(2.6rem, 1.85rem + 3.1vw, 4.8rem);
+
+  /* Ritmo: saltos no uniformes a propósito */
+  --space-3xs: 0.2rem;
+  --space-2xs: 0.35rem;
+  --space-xs: 0.55rem;
+  --space-s: 0.85rem;
+  --space-m: 1.3rem;
+  --space-l: 2.1rem;
+  --space-xl: 3.4rem;
+  --space-2xl: clamp(3.75rem, 2.4rem + 4.4vw, 6.5rem);
+
+  --gutter: clamp(1.15rem, 0.55rem + 2.9vw, 3.5rem);
+  --wrap: 82rem;
+  --measure: 62ch;
+
+  /* Radios desiguales: canto vivo en lo editorial, píldora solo en etiquetas */
+  --r-none: 0;
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 9px;
+  --r-pill: 999px;
+
+  --lift: 0 1px 0 oklch(30% 0.02 60 / 0.05), 0 14px 30px -20px oklch(28% 0.04 60 / 0.55);
+  --lift-high: 0 1px 0 oklch(30% 0.02 60 / 0.07), 0 26px 46px -26px oklch(28% 0.04 60 / 0.6);
+
+  --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 110ms;
+  --dur: 220ms;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    /* Noche: tinta cálida profunda, no negro puro; el papel pasa a pizarra */
+    --paper: oklch(19% 0.012 62);
+    --paper-raised: oklch(23.5% 0.014 62);
+    --paper-sunk: oklch(15.5% 0.011 62);
+    --paper-invert: oklch(95% 0.008 85);
+
+    --ink: oklch(92% 0.008 85);
+    --ink-strong: oklch(98% 0.005 85);
+    --ink-muted: oklch(72% 0.011 78);
+    --ink-faint: oklch(58% 0.012 70);
+    --ink-invert: oklch(17% 0.014 62);
+
+    --rule: oklch(31% 0.013 64);
+    --rule-strong: oklch(44% 0.016 66);
+
+    --accent: oklch(72% 0.15 40);
+    --accent-strong: oklch(81% 0.13 45);
+    --accent-wash: oklch(28% 0.055 35);
+
+    --ok: oklch(76% 0.14 158);
+    --ok-wash: oklch(26% 0.05 158);
+    --warn: oklch(80% 0.13 82);
+    --warn-wash: oklch(28% 0.055 80);
+    --danger: oklch(72% 0.17 27);
+    --danger-wash: oklch(28% 0.07 27);
+
+    --lift: 0 1px 0 oklch(100% 0 0 / 0.04), 0 16px 34px -22px oklch(0% 0 0 / 0.8);
+    --lift-high: 0 1px 0 oklch(100% 0 0 / 0.06), 0 28px 50px -26px oklch(0% 0 0 / 0.85);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--step-0);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.021em;
+  text-wrap: balance;
+  color: var(--ink-strong);
+}
+
+h1 {
+  font-size: var(--step-4);
+}
+
+h2 {
+  font-size: var(--step-2);
+}
+
+h3 {
+  font-size: var(--step-1);
+  letter-spacing: -0.012em;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-decoration-color: var(--rule-strong);
+  text-underline-offset: 0.22em;
+  text-decoration-thickness: from-font;
+  transition: color var(--dur-fast) var(--ease),
+    text-decoration-color var(--dur-fast) var(--ease);
+}
+
+a:hover {
+  color: var(--accent);
+  text-decoration-color: currentColor;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--r-xs);
+}
+
+::selection {
+  background: var(--accent-wash);
+  color: var(--ink-strong);
+}
+
+/* Utilidades globales, combinables con los módulos CSS */
+.wrap {
+  width: 100%;
+  max-width: var(--wrap);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
