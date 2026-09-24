@@ -80,11 +80,14 @@ function readConfig(): GoogleConfig | null {
 
   if (!clientEmail || !rawKey || !folderId || !projectId) return null;
 
+  // Copiar y pegar un id en el formulario de un proveedor arrastra espacios con
+  // facilidad, y Drive responde "File not found" al id con el espacio incluido: parece
+  // que el id es incorrecto cuando lo único que sobra es un carácter invisible.
   return {
-    clientEmail,
+    clientEmail: clientEmail.trim(),
     privateKey: normalizePrivateKey(rawKey),
-    folderId,
-    projectId,
+    folderId: folderId.trim(),
+    projectId: projectId.trim(),
   };
 }
 

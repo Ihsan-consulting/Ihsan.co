@@ -48,7 +48,7 @@ export async function GET(): Promise<Response> {
       scopes: ["https://www.googleapis.com/auth/drive.metadata.readonly"],
     });
     const folder = await google.drive({ version: "v3", auth }).files.get({
-      fileId: folderId,
+      fileId: folderId.trim(),
       fields: "id, name, mimeType, driveId, parents",
       supportsAllDrives: true,
     });
