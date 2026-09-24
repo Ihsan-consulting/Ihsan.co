@@ -1,16 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { generateContent } = vi.hoisted(() => ({ generateContent: vi.fn() }));
+const { create } = vi.hoisted(() => ({ create: vi.fn() }));
 
-vi.mock("@google/genai", () => ({
-  GoogleGenAI: class {
-    models = { generateContent };
+vi.mock("@anthropic-ai/sdk", () => ({
+  default: class {
+    messages = { create };
   },
 }));
 
 vi.mock("@/lib/env", () => ({
-  getEnv: () => ({ GEMINI_API_KEY: "test-key-not-real", GEMINI_MODEL: "gemini-3.6-flash" }),
+  getEnv: () => ({
+    ANTHROPIC_API_KEY: "test-key-not-real",
+    ANTHROPIC_MODEL: "claude-haiku-4-5-20251001",
+  }),
 }));
+
+/** The SDK returns content blocks; the module reads the first text one. */
+function reply(text: string) {
+  return { content: [{ type: "text", text }] };
+}
 
 const {
   generateMeetingBrief,
@@ -18,7 +26,7 @@ const {
   stripJsonFences,
   buildBriefPrompt,
   MAX_TRANSCRIPT_CHARS,
-} = await import("@/lib/ai/gemini");
+} = await import("@/lib/ai/claude");
 
 const BRIEF_JSON = JSON.stringify({
   headline: "Cierre de alcance con Cliente Demo",
@@ -30,7 +38,7 @@ const BRIEF_JSON = JSON.stringify({
 });
 
 beforeEach(() => {
-  generateContent.mockReset();
+  create.mockReset();
 });
 
 describe("stripJsonFences", () => {
@@ -92,8 +100,8 @@ describe("buildBriefPrompt", () => {
 });
 
 describe("generateMeetingBrief", () => {
-  it("devuelve el brief y el modelo usado cuando Gemini responde bien", async () => {
-    generateContent.mockResolvedValue({ text: "```json\n" + BRIEF_JSON + "\n```" });
+  it("devuelve el brief y el modelo usado cuando Claude responde bien", async () => {
+    create.mockResolvedValue(reply("```json\n" + BRIEF_JSON + "\n```"));
 
     const result = await generateMeetingBrief({
       title: "Kickoff Cliente Demo",
@@ -102,22 +110,22 @@ describe("generateMeetingBrief", () => {
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
-    expect(result.model).toBe("gemini-3.6-flash");
+    expect(result.model).toBe("claude-haiku-4-5-20251001");
     expect(result.brief.sentiment).toBe("positivo");
   });
 
   it("devuelve un error controlado en vez de lanzar cuando la API falla", async () => {
-    generateContent.mockRejectedValue(new Error("429 quota exceeded"));
+    create.mockRejectedValue(new Error("429 quota exceeded"));
 
     const result = await generateMeetingBrief({ title: "Kickoff", transcript: "" });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
-    expect(result.reason).toContain("gemini_request_failed");
+    expect(result.reason).toContain("anthropic_request_failed");
   });
 
   it("trata una respuesta vacía como fallo", async () => {
-    generateContent.mockResolvedValue({ text: undefined });
+    create.mockResolvedValue({ content: [] });
 
     const result = await generateMeetingBrief({ title: "Kickoff", transcript: "" });
 

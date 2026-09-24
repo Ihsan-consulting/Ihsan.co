@@ -13,7 +13,7 @@ const { state, generateMeetingBrief, sendDiscordBrief } = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/supabase/admin", () => ({ getAdminClient: () => state.client }));
-vi.mock("@/lib/ai/gemini", () => ({ generateMeetingBrief }));
+vi.mock("@/lib/ai/claude", () => ({ generateMeetingBrief }));
 vi.mock("@/lib/discord/notify", () => ({ sendDiscordBrief }));
 
 const { processMeeting } = await import("@/lib/pipeline/process");

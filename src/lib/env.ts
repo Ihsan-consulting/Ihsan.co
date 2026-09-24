@@ -8,8 +8,16 @@ const schema = z.object({
   FATHOM_WEBHOOK_SECRET: z.string().min(1),
   FATHOM_API_KEY: z.string().min(1).optional(),
 
-  GEMINI_API_KEY: z.string().min(1),
-  GEMINI_MODEL: z.string().min(1).default("gemini-3.6-flash"),
+  // Los briefs los genera Claude. Opcional a propósito: si la clave todavía no está en
+  // el entorno, el panel sigue en pie y solo falla la generación del resumen, con un
+  // motivo legible en `deliveries` — en vez de tumbar todas las rutas con un 503.
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
+  ANTHROPIC_MODEL: z.string().min(1).default("claude-haiku-4-5-20251001"),
+
+  // Gemini quedó atrás (cuota agotada y, en el plan gratuito, Google entrena con el
+  // contenido). Se mantiene opcional para no obligar a limpiar el entorno desplegado.
+  GEMINI_API_KEY: z.string().min(1).optional(),
+  GEMINI_MODEL: z.string().min(1).optional(),
 
   DISCORD_DEFAULT_WEBHOOK_URL: z.string().url(),
 

@@ -1,10 +1,10 @@
-import { GoogleGenAI } from "@google/genai";
+import Anthropic from "@anthropic-ai/sdk";
 import { z } from "zod";
 import { getEnv } from "@/lib/env";
 
 /**
  * A two-hour meeting can produce several hundred thousand characters. Capping the input
- * keeps us inside the model context and, just as importantly, inside the free-tier quota.
+ * keeps us inside the model context and keeps the per-meeting cost predictable.
  */
 export const MAX_TRANSCRIPT_CHARS = 40_000;
 const MAX_OUTPUT_TOKENS = 2048;
@@ -90,9 +90,7 @@ export function buildBriefPrompt(input: MeetingBriefInput): string {
     input.actionItems?.length
       ? `Tareas detectadas por Fathom:\n- ${input.actionItems.join("\n- ")}`
       : null,
-    input.summaryMarkdown
-      ? `Resumen automático de Fathom:\n${input.summaryMarkdown}`
-      : null,
+    input.summaryMarkdown ? `Resumen automático de Fathom:\n${input.summaryMarkdown}` : null,
     `Transcripción${truncated ? " (recortada)" : ""}:\n${transcript || "(sin transcripción disponible)"}`,
   ];
 
@@ -110,35 +108,36 @@ function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : "unknown_error";
 }
 
-let client: GoogleGenAI | undefined;
+let client: Anthropic | undefined;
 
-function getClient(apiKey: string): GoogleGenAI {
-  if (!client) client = new GoogleGenAI({ apiKey });
+function getClient(apiKey: string): Anthropic {
+  if (!client) client = new Anthropic({ apiKey });
   return client;
 }
 
-/** Never throws: a model or quota failure comes back as a value the caller can record. */
+/** Never throws: a model, quota or billing failure comes back as a value the caller records. */
 export async function generateMeetingBrief(
   input: MeetingBriefInput,
 ): Promise<MeetingBriefResult> {
   const env = getEnv();
-  const model = env.GEMINI_MODEL;
+  const apiKey = env.ANTHROPIC_API_KEY;
+  if (!apiKey) return { ok: false, reason: "anthropic_api_key_missing" };
+
+  const model = env.ANTHROPIC_MODEL;
 
   let text: string | undefined;
   try {
-    const response = await getClient(env.GEMINI_API_KEY).models.generateContent({
+    const response = await getClient(apiKey).messages.create({
       model,
-      contents: buildBriefPrompt(input),
-      config: {
-        systemInstruction: SYSTEM_INSTRUCTION,
-        maxOutputTokens: MAX_OUTPUT_TOKENS,
-        responseMimeType: "application/json",
-        temperature: TEMPERATURE,
-      },
+      max_tokens: MAX_OUTPUT_TOKENS,
+      temperature: TEMPERATURE,
+      system: SYSTEM_INSTRUCTION,
+      messages: [{ role: "user", content: buildBriefPrompt(input) }],
     });
-    text = response.text;
+    const first = response.content[0];
+    text = first && first.type === "text" ? first.text : undefined;
   } catch (error) {
-    return { ok: false, reason: `gemini_request_failed: ${toMessage(error)}` };
+    return { ok: false, reason: `anthropic_request_failed: ${toMessage(error)}` };
   }
 
   if (!text) return { ok: false, reason: "empty_model_response" };

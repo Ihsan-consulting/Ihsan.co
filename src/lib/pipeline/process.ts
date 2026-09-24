@@ -1,4 +1,4 @@
-import { generateMeetingBrief, type MeetingBriefResult } from "@/lib/ai/gemini";
+import { generateMeetingBrief, type MeetingBriefResult } from "@/lib/ai/claude";
 import { sendDiscordBrief, type DiscordSendResult } from "@/lib/discord/notify";
 import { transcriptToPlainText, type FathomTranscriptEntry } from "@/lib/fathom/payload";
 import { createMeetingDoc, isGoogleConfigured } from "@/lib/google/docs";
