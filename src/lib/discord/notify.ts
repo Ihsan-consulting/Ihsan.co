@@ -32,6 +32,8 @@ export type DiscordBriefInput = {
   risks: readonly string[];
   nextSteps: readonly string[];
   sentiment?: string | null;
+  /** Enlace al documento de Drive, cuando ya existe. */
+  docUrl?: string | null;
 };
 
 export type DiscordSendResult =
@@ -103,11 +105,16 @@ export function buildMeetingEmbed(input: DiscordBriefInput): DiscordEmbed {
     ? { name: "Sentimiento", value: truncate(input.sentiment, DISCORD_LIMITS.fieldValue) }
     : null;
 
+  const docField: DiscordEmbedField | null = input.docUrl
+    ? { name: "Documento", value: truncate(input.docUrl, DISCORD_LIMITS.fieldValue) }
+    : null;
+
   const fields = [
     toField("Decisiones clave", input.keyDecisions),
     toField("Riesgos", input.risks),
     toField("Próximos pasos", input.nextSteps),
     sentimentField,
+    docField,
   ].filter((field): field is DiscordEmbedField => field !== null);
 
   const embed: DiscordEmbed = {

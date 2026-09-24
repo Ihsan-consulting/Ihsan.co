@@ -160,9 +160,9 @@ async function syncGoogleDoc(
   recordingId: number,
   context: MeetingContext,
   brief: Extract<MeetingBriefResult, { ok: true }>["brief"] | null,
-): Promise<void> {
-  if (context.googleDocId) return;
-  if (!isGoogleConfigured()) return;
+): Promise<string | null> {
+  if (context.googleDocId) return null;
+  if (!isGoogleConfigured()) return null;
 
   try {
     const result = await createMeetingDoc({
@@ -196,8 +196,11 @@ async function syncGoogleDoc(
         ? { ok: true, target: result.docUrl }
         : { ok: false, target: GOOGLE_TARGET, error: result.reason },
     );
+
+    return result.ok ? result.docUrl : null;
   } catch (error) {
     console.error(`google docs sync failed for recording ${recordingId}: ${toMessage(error)}`);
+    return null;
   }
 }
 
@@ -293,7 +296,9 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     }
 
     await saveInsights(db, params.recordingId, brief);
-    await syncGoogleDoc(db, params.recordingId, context, brief.brief);
+    // Sequenced before Discord on purpose: the message carries the document link, so the
+    // team gets one notification pointing at the full write-up instead of two.
+    const docUrl = await syncGoogleDoc(db, params.recordingId, context, brief.brief);
 
     const delivery = await sendDiscordBrief({
       title: context.title,
@@ -304,6 +309,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
       risks: brief.brief.risks,
       nextSteps: brief.brief.next_steps,
       sentiment: brief.brief.sentiment,
+      docUrl,
     });
 
     await recordDelivery(db, params.recordingId, CHANNEL, delivery);

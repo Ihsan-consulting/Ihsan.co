@@ -68,7 +68,7 @@ beforeEach(() => {
 });
 
 describe("buildDocumentText", () => {
-  it("incluye brief, resumen de Fathom, tareas, asistentes y transcripción", () => {
+  it("incluye brief, resumen de Fathom, tareas y asistentes, sin transcripción", () => {
     const text = buildDocumentText(INPUT);
 
     expect(text).toContain("Kickoff Cliente Demo");
@@ -80,7 +80,10 @@ describe("buildDocumentText", () => {
     expect(text).toContain("RESUMEN DE FATHOM");
     expect(text).toContain("TAREAS\n• Enviar SOW");
     expect(text).toContain("ASISTENTES\n• Ana Demo\n• Luis Cliente");
-    expect(text).toContain("TRANSCRIPCIÓN\nAna Demo: Confirmamos alcance");
+    // La transcripción se excluye a propósito: hacía documentos de ~37 páginas que
+    // enterraban el análisis. El texto íntegro sigue en Supabase y en Fathom.
+    expect(text).not.toContain("TRANSCRIPCIÓN");
+    expect(text).not.toContain("Ana Demo: Confirmamos alcance");
   });
 
   it("omite las secciones vacías en lugar de dejar encabezados huérfanos", () => {
@@ -95,7 +98,7 @@ describe("buildDocumentText", () => {
     expect(text).not.toContain("TITULAR");
     expect(text).not.toContain("RIESGOS");
     expect(text).not.toContain("TAREAS");
-    expect(text).toContain("TRANSCRIPCIÓN");
+    expect(text).not.toContain("TRANSCRIPCIÓN");
   });
 
   it("fecha el nombre del documento en es-ES y Europe/Madrid", () => {
@@ -128,7 +131,7 @@ describe("createMeetingDoc", () => {
     expect(request.requestBody.mimeType).toBe("application/vnd.google-apps.document");
     expect(request.requestBody.parents).toEqual(["1AbCdEfGhIjKlMnOpQrStUvWxYz012345"]);
     expect(request.media.mimeType).toBe("text/plain");
-    expect(request.media.body).toContain("TRANSCRIPCIÓN");
+    expect(request.media.body).not.toContain("TRANSCRIPCIÓN");
   });
 
   it("deriva la URL del id cuando Drive no devuelve webViewLink", async () => {

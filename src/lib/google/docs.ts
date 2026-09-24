@@ -174,7 +174,10 @@ export function buildDocumentText(input: GoogleDocInput): string {
     section("RESUMEN DE FATHOM", input.fathomSummaryMarkdown),
     section("TAREAS", bullets(input.actionItems)),
     section("ASISTENTES", bullets(input.attendees)),
-    section("TRANSCRIPCIÓN", input.transcript),
+    // La transcripción completa se queda fuera a propósito: convertía cada documento en
+    // ~37 páginas que nadie lee y enterraba lo único que se consulta —análisis, tono,
+    // riesgos y compromisos—. El texto íntegro sigue en Supabase y en Fathom, cuyo
+    // enlace va en la cabecera, así que no se pierde: se deja de repetir.
   ];
 
   return blocks.filter((block): block is string => Boolean(block)).join("\n\n");
