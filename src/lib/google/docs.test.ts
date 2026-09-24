@@ -20,7 +20,7 @@ vi.mock("googleapis", () => ({
   },
 }));
 
-const { buildDocumentName, buildDocumentText, createMeetingDoc, isGoogleConfigured } = await import(
+const { buildDocumentName, buildDocumentHtml, createMeetingDoc, isGoogleConfigured } = await import(
   "@/lib/google/docs"
 );
 
@@ -67,19 +67,24 @@ beforeEach(() => {
   filesCreate.mockReset();
 });
 
-describe("buildDocumentText", () => {
+describe("buildDocumentHtml", () => {
   it("incluye brief, resumen de Fathom, tareas y asistentes, sin transcripción", () => {
-    const text = buildDocumentText(INPUT);
+    const text = buildDocumentHtml(INPUT);
 
     expect(text).toContain("Kickoff Cliente Demo");
     expect(text).toContain("Grabado por Ana Demo");
-    expect(text).toContain("TITULAR\nCierre de alcance");
+    // El titular ya no es una sección: encabeza el documento, bajo el título.
+    expect(text).toContain("IHSAN.CO · BRIEF DE LLAMADA");
+    expect(text).toContain("Cierre de alcance");
     expect(text).toContain("RESUMEN EJECUTIVO");
-    expect(text).toContain("DECISIONES CLAVE\n• Aprobar fase 2");
-    expect(text).toContain("PRÓXIMOS PASOS\n• Enviar SOW el 2026-09-26");
+    expect(text).toContain("DECISIONES CLAVE");
+    expect(text).toContain('<li style="margin-bottom:6pt">Aprobar fase 2</li>');
+    expect(text).toContain("PRÓXIMOS PASOS");
+    expect(text).toContain("Enviar SOW el 2026-09-26");
     expect(text).toContain("RESUMEN DE FATHOM");
-    expect(text).toContain("TAREAS\n• Enviar SOW");
-    expect(text).toContain("ASISTENTES\n• Ana Demo\n• Luis Cliente");
+    expect(text).toContain("TAREAS");
+    expect(text).toContain("ASISTENTES");
+    expect(text).toContain("Luis Cliente");
     // La transcripción se excluye a propósito: hacía documentos de ~37 páginas que
     // enterraban el análisis. El texto íntegro sigue en Supabase y en Fathom.
     expect(text).not.toContain("TRANSCRIPCIÓN");
@@ -87,7 +92,7 @@ describe("buildDocumentText", () => {
   });
 
   it("omite las secciones vacías en lugar de dejar encabezados huérfanos", () => {
-    const text = buildDocumentText({
+    const text = buildDocumentHtml({
       ...INPUT,
       brief: null,
       fathomSummaryMarkdown: null,
@@ -95,7 +100,7 @@ describe("buildDocumentText", () => {
       attendees: [],
     });
 
-    expect(text).not.toContain("TITULAR");
+    expect(text).not.toContain("RESUMEN EJECUTIVO");
     expect(text).not.toContain("RIESGOS");
     expect(text).not.toContain("TAREAS");
     expect(text).not.toContain("TRANSCRIPCIÓN");
@@ -130,7 +135,7 @@ describe("createMeetingDoc", () => {
     const request = filesCreate.mock.calls[0][0];
     expect(request.requestBody.mimeType).toBe("application/vnd.google-apps.document");
     expect(request.requestBody.parents).toEqual(["1AbCdEfGhIjKlMnOpQrStUvWxYz012345"]);
-    expect(request.media.mimeType).toBe("text/plain");
+    expect(request.media.mimeType).toBe("text/html");
     expect(request.media.body).not.toContain("TRANSCRIPCIÓN");
   });
 

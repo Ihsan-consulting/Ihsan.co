@@ -19,7 +19,7 @@ import { getEnv } from "@/lib/env";
 
 const SCOPES = ["https://www.googleapis.com/auth/drive.file"];
 const DOC_MIME = "application/vnd.google-apps.document";
-const UPLOAD_MIME = "text/plain";
+const UPLOAD_MIME = "text/html";
 
 /** Drive rechaza nombres largos y el título de la reunión es texto libre. */
 const NAME_LIMIT = 180;
@@ -132,55 +132,107 @@ function truncate(value: string, max: number): string {
   return `${value.slice(0, max - 1)}…`;
 }
 
-function bullets(items: readonly string[]): string {
-  return items
-    .map((item) => item.trim())
-    .filter((item) => item.length > 0)
-    .map((item) => `• ${item}`)
-    .join("\n");
+/**
+ * Todo lo que entra en el documento viene de una llamada: títulos, tareas y nombres son
+ * texto de terceros. Se escapa siempre antes de componer el HTML.
+ */
+function esc(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
-function section(heading: string, body: string | null): string | null {
-  const text = body?.trim();
-  return text ? `${heading}\n${text}` : null;
+function bullets(items: readonly string[]): string {
+  const rows = items
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map((item) => `<li style="margin-bottom:6pt">${esc(item)}</li>`)
+    .join("");
+  return rows ? `<ul style="margin-top:4pt">${rows}</ul>` : "";
+}
+
+/** Se respetan los párrafos del resumen: una línea en blanco separa bloques. */
+function paragraphs(value: string): string {
+  return value
+    .split(/\n{2,}/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .map((block) => `<p style="margin:0 0 8pt 0">${esc(block).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
+function section(heading: string, bodyHtml: string): string | null {
+  if (!bodyHtml.trim()) return null;
+  const style =
+    "font-size:11pt;letter-spacing:1pt;color:#6E6E73;" +
+    "border-bottom:1px solid #D6D6DB;padding-bottom:4pt;margin:20pt 0 8pt 0";
+  return `<h2 style="${style}">${esc(heading.toUpperCase())}</h2>${bodyHtml}`;
 }
 
 function briefSections(brief: GoogleDocBrief | null): Array<string | null> {
   if (!brief) return [];
   return [
-    section("TITULAR", brief.headline),
-    section("RESUMEN EJECUTIVO", brief.executiveSummary),
-    section("DECISIONES CLAVE", bullets(brief.keyDecisions)),
-    section("RIESGOS", bullets(brief.risks)),
-    section("PRÓXIMOS PASOS", bullets(brief.nextSteps)),
-    section("TONO", brief.sentiment),
+    brief.executiveSummary
+      ? section("Resumen ejecutivo", paragraphs(brief.executiveSummary))
+      : null,
+    section("Decisiones clave", bullets(brief.keyDecisions)),
+    section("Riesgos", bullets(brief.risks)),
+    section("Próximos pasos", bullets(brief.nextSteps)),
+    brief.sentiment
+      ? section(
+          "Tono de la llamada",
+          `<p style="margin:0"><strong>${esc(brief.sentiment)}</strong></p>`,
+        )
+      : null,
   ];
 }
 
-/** Cuerpo del documento, en español. Exportado para poder probarlo sin red. */
-export function buildDocumentText(input: GoogleDocInput): string {
-  const header = [
-    input.title,
+/**
+ * Cuerpo del documento como HTML. Drive lo convierte en un Doc con estilos reales
+ * —titulares, listas, negritas—, cosa que el texto plano no permitía: salía un bloc de
+ * notas sin jerarquía. Se sigue exportando para poder probarlo sin red.
+ */
+export function buildDocumentHtml(input: GoogleDocInput): string {
+  const meta = [
     formatDateTime(input.startedAt),
-    input.recordedByName ? `Grabado por ${input.recordedByName}` : null,
-    input.shareUrl ? `Grabación: ${input.shareUrl}` : null,
+    input.recordedByName ? `Grabado por ${esc(input.recordedByName)}` : null,
   ]
     .filter((line): line is string => line !== null)
-    .join("\n");
+    .join(" · ");
+
+  const header = [
+    `<p style="font-size:9pt;letter-spacing:2pt;color:#8E8E94;margin:0 0 4pt 0">IHSAN.CO · BRIEF DE LLAMADA</p>`,
+    `<h1 style="font-size:20pt;margin:0 0 6pt 0;color:#141416">${esc(input.title)}</h1>`,
+    input.brief?.headline
+      ? `<p style="font-size:12pt;color:#48484D;margin:0 0 8pt 0">${esc(input.brief.headline)}</p>`
+      : null,
+    `<p style="font-size:9.5pt;color:#8E8E94;margin:0">${meta}</p>`,
+    input.shareUrl
+      ? `<p style="font-size:9.5pt;margin:4pt 0 0 0"><a href="${esc(input.shareUrl)}">Ver la grabación en Fathom</a></p>`
+      : null,
+    `<hr style="border:none;border-top:2px solid #141416;margin:14pt 0 0 0">`,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("");
 
   const blocks: Array<string | null> = [
     header,
     ...briefSections(input.brief),
-    section("RESUMEN DE FATHOM", input.fathomSummaryMarkdown),
-    section("TAREAS", bullets(input.actionItems)),
-    section("ASISTENTES", bullets(input.attendees)),
+    input.fathomSummaryMarkdown
+      ? section("Resumen de Fathom", paragraphs(input.fathomSummaryMarkdown))
+      : null,
+    section("Tareas", bullets(input.actionItems)),
+    section("Asistentes", bullets(input.attendees)),
     // La transcripción completa se queda fuera a propósito: convertía cada documento en
     // ~37 páginas que nadie lee y enterraba lo único que se consulta —análisis, tono,
     // riesgos y compromisos—. El texto íntegro sigue en Supabase y en Fathom, cuyo
     // enlace va en la cabecera, así que no se pierde: se deja de repetir.
   ];
 
-  return blocks.filter((block): block is string => Boolean(block)).join("\n\n");
+  const body = blocks.filter((block): block is string => Boolean(block)).join("");
+  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#141416;font-size:11pt;line-height:1.5">${body}</body></html>`;
 }
 
 export function buildDocumentName(input: GoogleDocInput): string {
@@ -223,7 +275,7 @@ export async function createMeetingDoc(input: GoogleDocInput): Promise<GoogleDoc
         mimeType: DOC_MIME,
         parents: [config.folderId],
       },
-      media: { mimeType: UPLOAD_MIME, body: buildDocumentText(input) },
+      media: { mimeType: UPLOAD_MIME, body: buildDocumentHtml(input) },
       fields: "id, webViewLink",
       supportsAllDrives: true,
     });
