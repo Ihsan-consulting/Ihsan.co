@@ -2,6 +2,7 @@ import { after } from "next/server";
 import { listFathomMeetings } from "@/lib/fathom/client";
 import { ingestMeeting } from "@/lib/pipeline/ingest";
 import { processMeeting } from "@/lib/pipeline/process";
+import { getAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,7 +30,6 @@ export async function POST(): Promise<Response> {
   let ingested = 0;
   let skipped = 0;
   const failures: string[] = [];
-  const toProcess: number[] = [];
 
   for (let page = 0; page < MAX_PAGES; page++) {
     const result = await listFathomMeetings({ cursor });
@@ -46,7 +46,6 @@ export async function POST(): Promise<Response> {
       const outcome = await ingestMeeting(meeting);
       if (outcome.ok) {
         ingested += 1;
-        toProcess.push(meeting.recording_id);
       } else {
         failures.push(`recording ${meeting.recording_id}: ${outcome.error}`);
       }
@@ -56,7 +55,24 @@ export async function POST(): Promise<Response> {
     if (!cursor) break;
   }
 
-  const queued = toProcess.slice(0, MAX_BRIEFS_PER_RUN);
+  // Pick what to summarise from the database, not from what this run happened to ingest.
+  // Choosing the latter meant every re-run retried the same first few recordings forever:
+  // it could never advance to the rest, and a transient Gemini 503 was unrecoverable.
+  const db = getAdminClient();
+  const [{ data: withBrief }, { data: allMeetings }] = await Promise.all([
+    db.from("meeting_insights").select("recording_id"),
+    db
+      .from("meetings")
+      .select("recording_id")
+      .order("recording_start_time", { ascending: false, nullsFirst: false }),
+  ]);
+
+  const done = new Set((withBrief ?? []).map((row) => row.recording_id));
+  const pending = (allMeetings ?? [])
+    .map((row) => row.recording_id)
+    .filter((id) => !done.has(id));
+
+  const queued = pending.slice(0, MAX_BRIEFS_PER_RUN);
   if (queued.length > 0) {
     // Sequential on purpose: parallel Gemini calls trip the free-tier rate limit and the
     // whole batch fails instead of most of it succeeding.
@@ -73,7 +89,7 @@ export async function POST(): Promise<Response> {
     ingested,
     skipped,
     briefs_queued: queued.length,
-    briefs_pending: Math.max(0, toProcess.length - queued.length),
+    briefs_pending: Math.max(0, pending.length - queued.length),
     more_pages: cursor !== null,
     failures,
   });
