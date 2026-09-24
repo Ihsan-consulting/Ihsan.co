@@ -159,7 +159,7 @@ async function syncGoogleDoc(
   db: AdminClient,
   recordingId: number,
   context: MeetingContext,
-  brief: Extract<MeetingBriefResult, { ok: true }>["brief"],
+  brief: Extract<MeetingBriefResult, { ok: true }>["brief"] | null,
 ): Promise<void> {
   if (context.googleDocId) return;
   if (!isGoogleConfigured()) return;
@@ -170,14 +170,16 @@ async function syncGoogleDoc(
       startedAt: context.startedAt,
       shareUrl: context.shareUrl,
       recordedByName: context.recordedByName,
-      brief: {
-        headline: brief.headline,
-        executiveSummary: brief.executive_summary,
-        keyDecisions: brief.key_decisions,
-        risks: brief.risks,
-        nextSteps: brief.next_steps,
-        sentiment: brief.sentiment ?? null,
-      },
+      brief: brief
+        ? {
+            headline: brief.headline,
+            executiveSummary: brief.executive_summary,
+            keyDecisions: brief.key_decisions,
+            risks: brief.risks,
+            nextSteps: brief.next_steps,
+            sentiment: brief.sentiment ?? null,
+          }
+        : null,
       fathomSummaryMarkdown: context.summaryMarkdown,
       actionItems: context.actionItems,
       attendees: context.participants,
@@ -249,6 +251,10 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     });
 
     if (!brief.ok) {
+      // The document does not depend on the brief: the transcript, the action items,
+      // the attendees and Fathom's own summary are all already in hand. Mirroring it
+      // here means a Gemini outage costs the brief, not the document too.
+      await syncGoogleDoc(db, params.recordingId, context, null);
       await recordDelivery(db, params.recordingId, CHANNEL, {
         ok: false,
         target: CHANNEL,
