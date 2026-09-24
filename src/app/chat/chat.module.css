@@ -1,7 +1,7 @@
 /*
  * Chat. El armazón del diseño se mantiene —cabecera, cuerpo centrado y barra
- * inferior— pero la barra no lleva campo de escritura: no hay backend de mensajes
- * al que enviar nada, así que un input aquí solo se tragaría lo que se escribiera.
+ * inferior— y la barra lleva el campo de escritura real: lo que se escribe va a
+ * /api/chat, que responde con lo que consta en las llamadas archivadas.
  */
 
 .screen {
@@ -109,9 +109,84 @@
   letter-spacing: -0.005em;
 }
 
-/* --- Barra inferior: explicación, nunca un campo muerto ------------------- */
+/* --- Hilo: sólo existe cuando alguien ha preguntado algo ------------------ */
+
+.threadWrap {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: var(--sp-5);
+  padding-inline: var(--pad-x);
+}
+
+.thread {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+  width: 100%;
+  max-width: 45rem;
+  margin-inline: auto;
+}
+
+.turn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.turnRole {
+  color: var(--ink-5);
+  font-size: 0.656rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.turn[data-role="user"] .turnRole {
+  color: var(--accent-ink);
+}
+
+/* `pre-wrap` conserva los saltos del modelo; el texto entra como nodo, nunca como HTML. */
+.turnBody {
+  color: var(--ink-2);
+  font-size: var(--t-base);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.turn[data-role="user"] .turnBody {
+  padding: var(--sp-5) var(--sp-6);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2xl);
+  color: var(--ink);
+}
+
+.pending {
+  color: var(--ink-5);
+  font-size: var(--t-base);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+.error {
+  width: 100%;
+  max-width: 45rem;
+  margin-inline: auto;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid rgba(255, 107, 96, 0.32);
+  border-radius: var(--r-lg);
+  background-color: var(--danger-wash);
+  font-size: var(--t-s);
+  color: var(--danger);
+}
+
+/* --- Barra inferior: el campo de escritura real --------------------------- */
 
 .dock {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   flex: none;
   padding: var(--sp-6) var(--pad-x) var(--sp-9);
   background-color: var(--bg-veil);
@@ -119,47 +194,97 @@
   backdrop-filter: blur(18px);
 }
 
-.dockInner {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--sp-5);
+.composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--sp-4) var(--sp-5);
   max-width: 45rem;
   margin-inline: auto;
-  padding: var(--sp-5) var(--sp-7);
+  padding: var(--sp-5) var(--sp-6);
   background-color: var(--surface);
   border: 1px solid var(--line-control);
   border-radius: var(--r-3xl);
   box-shadow: var(--shadow-card);
 }
 
-.dockIcon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-pill);
-  background-color: var(--surface-raised-2);
-  color: var(--ink-3);
-}
-
-.dockBody {
-  flex: 1 1 16rem;
+.textarea {
+  width: 100%;
   min-width: 0;
-}
-
-.dockTitle {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line-input);
+  border-radius: var(--r-xl);
+  background-color: var(--surface-sunk);
   color: var(--ink);
   font-size: var(--t-md);
-  font-weight: 600;
-  letter-spacing: -0.008em;
+  line-height: 1.5;
+  resize: none;
+  transition: border-color var(--dur-fast) var(--ease);
 }
 
-.dockNote {
-  margin-top: 2px;
-  color: var(--ink-4);
-  font-size: var(--t-xs);
+.textarea::placeholder {
+  color: var(--ink-6);
+}
+
+.textarea:hover:not(:disabled) {
+  border-color: var(--line-hover);
+}
+
+.textarea:focus {
+  outline: none;
+  border-color: var(--accent-ink);
+}
+
+.textarea:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.send {
+  height: 40px;
+  padding-inline: var(--sp-7);
+  border: 0;
+  border-radius: var(--r-xl);
+  background-color: var(--accent);
+  color: #fff;
+  font-size: var(--t-md);
+  font-weight: 590;
+  letter-spacing: -0.012em;
+  cursor: pointer;
+  box-shadow: 0 6px 20px var(--accent-glow);
+  transition: filter var(--dur-fast) var(--ease), transform var(--dur-fast) var(--ease);
+}
+
+.send:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.send:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.send:disabled {
+  background-color: var(--surface-raised-2);
+  color: var(--ink-5);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.hint {
+  grid-column: 1 / -1;
+  color: var(--ink-5);
+  font-size: var(--t-2xs);
   line-height: 1.5;
   letter-spacing: -0.005em;
+}
+
+/* Por debajo de 480px el botón junto al campo deja la caja de texto inservible. */
+@media (max-width: 30rem) {
+  .composer {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .send {
+    width: 100%;
+  }
 }

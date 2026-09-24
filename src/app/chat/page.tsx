@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { PageHeader } from "@/components/ui/primitives";
 import { getCorpusScope } from "@/lib/queries/chat";
 
+import { ChatConversation } from "./ChatConversation";
 import styles from "./chat.module.css";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Chat",
   description:
-    "Qué material hay indexado de las llamadas y dónde ocurre de verdad la conversación sobre ellas.",
+    "Preguntas sobre las llamadas archivadas, respondidas con lo que consta en sus briefs y compromisos.",
 };
 
 export default async function ChatPage() {
@@ -22,20 +23,20 @@ export default async function ChatPage() {
         <PageHeader
           kicker={`${String(scope.meetings)} llamadas · ${String(scope.withTranscript)} con transcripción · fuente Fathom`}
           title="Chat"
-          lede="La conversación sobre las llamadas ocurre en el bot de Discord. Este panel no guarda ningún hilo: aquí solo se ve qué material hay indexado para poder preguntar."
+          lede="Pregunta sobre las llamadas archivadas. Las respuestas salen solo de sus briefs y compromisos, y citan de qué reunión y de qué fecha vienen."
         />
       </div>
 
       <div className={styles.body}>
         <div className={styles.inner}>
           <p className={styles.statement}>
-            Este panel no tiene chat propio. Lo que hay es el material sobre el que se puede
-            preguntar.
+            Pregunta lo que necesites sobre las llamadas archivadas.
           </p>
           <p className={styles.note}>
-            El bot de Discord es quien responde sobre las llamadas y vive en otro repositorio. Para
-            no fingir una conversación que no existe, esta pantalla no lleva campo de escritura: lo
-            que se escribiera aquí no llegaría a ninguna parte.
+            Responde únicamente con el material indexado aquí abajo: el brief de cada llamada y sus
+            compromisos abiertos, nunca la transcripción completa. Si algo no consta, lo dirá en vez
+            de suponerlo. Ni las preguntas ni las respuestas se guardan: el hilo se pierde al
+            recargar.
           </p>
 
           <div className={styles.cards}>
@@ -94,31 +95,7 @@ export default async function ChatPage() {
         </div>
       </div>
 
-      <div className={styles.dock}>
-        <div className={styles.dockInner}>
-          <span className={styles.dockIcon} aria-hidden="true">
-            <svg
-              viewBox="0 0 15 15"
-              width="15"
-              height="15"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M2 3.2h11v7H6.8L3.6 12.6V10.2H2z" />
-            </svg>
-          </span>
-          <span className={styles.dockBody}>
-            <span className={styles.dockTitle}>Se pregunta desde Discord</span>
-            <span className={styles.dockNote}>
-              El bot publica cada resumen en el canal y responde ahí mismo sobre lo que se dijo. Si
-              una llamada no aparece en Discord, su entrega estará en Alertas.
-            </span>
-          </span>
-        </div>
-      </div>
+      <ChatConversation />
     </div>
   );
 }

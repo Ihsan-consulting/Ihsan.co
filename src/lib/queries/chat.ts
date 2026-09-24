@@ -5,9 +5,9 @@ import { getAdminClient } from "@/lib/supabase/admin";
 import { unwrapCount } from "./meetings";
 
 /**
- * Alcance del corpus. La pantalla de chat no tiene tabla propia —la conversación
- * vive en el bot de Discord, fuera de este repositorio—, así que lo único que puede
- * afirmar con datos es cuánto material hay indexado. Eso es lo que cuenta esto.
+ * Alcance del corpus: cuánto material hay indexado para poder responder. El chat
+ * no tiene tabla propia —la conversación vive en el estado del componente y no se
+ * guarda—, así que esto es lo único que la pantalla puede afirmar con datos.
  */
 
 export type CorpusScope = {

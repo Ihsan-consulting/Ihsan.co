@@ -169,7 +169,7 @@ const TEXT_KEYS = [
   "item",
 ] as const;
 
-function toTextList(value: Json | null | undefined): string[] {
+export function toTextList(value: Json | null | undefined): string[] {
   if (!Array.isArray(value)) return [];
 
   const out: string[] = [];
