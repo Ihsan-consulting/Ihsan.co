@@ -144,13 +144,31 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+/**
+ * Marca de ihsan.co. Vive en `public/`, así que la sirve el propio despliegue y no
+ * depende de permisos de Drive, que es donde falla alojar la imagen en la carpeta.
+ */
+const LOGO_URL = "https://ihsan-co.vercel.app/logo-ihsan.png";
+
+/** Negro de marca y tinta blanca; los grises conservan contraste sobre el negro. */
+const INK = "#FFFFFF";
+const INK_SOFT = "#C9C9CF";
+const INK_FAINT = "#8E8E94";
+const PAPER = "#000000";
+const RULE = "#2A2A2F";
+/** Inter primero, con alternativas por si el visor no la tiene instalada. */
+const FONT = "Inter,Geist,'Helvetica Neue',Arial,sans-serif";
+
 function bullets(items: readonly string[]): string {
   const rows = items
     .map((item) => item.trim())
     .filter((item) => item.length > 0)
-    .map((item) => `<li style="margin-bottom:6pt">${esc(item)}</li>`)
+    .map(
+      (item) =>
+        `<li style="margin-bottom:6pt;color:${INK};line-height:1.5">${esc(item)}</li>`,
+    )
     .join("");
-  return rows ? `<ul style="margin-top:4pt">${rows}</ul>` : "";
+  return rows ? `<ul style="margin:4pt 0 0 0">${rows}</ul>` : "";
 }
 
 /** Se respetan los párrafos del resumen: una línea en blanco separa bloques. */
@@ -159,15 +177,19 @@ function paragraphs(value: string): string {
     .split(/\n{2,}/)
     .map((block) => block.trim())
     .filter(Boolean)
-    .map((block) => `<p style="margin:0 0 8pt 0">${esc(block).replace(/\n/g, "<br>")}</p>`)
+    .map(
+      (block) =>
+        `<p style="margin:0 0 9pt 0;color:${INK_SOFT};line-height:1.55">${esc(block).replace(/\n/g, "<br>")}</p>`,
+    )
     .join("");
 }
 
+/** Etiqueta de sección: 12pt, mayúsculas, peso 700, tracking amplio. */
 function section(heading: string, bodyHtml: string): string | null {
   if (!bodyHtml.trim()) return null;
   const style =
-    "font-size:11pt;letter-spacing:1pt;color:#6E6E73;" +
-    "border-bottom:1px solid #D6D6DB;padding-bottom:4pt;margin:20pt 0 8pt 0";
+    `font-family:${FONT};font-size:12pt;font-weight:700;letter-spacing:1.4pt;` +
+    `color:${INK};border-bottom:1px solid ${RULE};padding-bottom:5pt;margin:22pt 0 9pt 0`;
   return `<h2 style="${style}">${esc(heading.toUpperCase())}</h2>${bodyHtml}`;
 }
 
@@ -203,16 +225,17 @@ export function buildDocumentHtml(input: GoogleDocInput): string {
     .join(" · ");
 
   const header = [
-    `<p style="font-size:9pt;letter-spacing:2pt;color:#8E8E94;margin:0 0 4pt 0">IHSAN.CO · BRIEF DE LLAMADA</p>`,
-    `<h1 style="font-size:20pt;margin:0 0 6pt 0;color:#141416">${esc(input.title)}</h1>`,
+    `<img src="${LOGO_URL}" width="46" height="46" alt="ihsan.co" style="margin:0 0 10pt 0">`,
+    `<p style="font-family:${FONT};font-size:12pt;font-weight:700;letter-spacing:1.6pt;color:${INK_FAINT};margin:0 0 6pt 0">IHSAN.CO · BRIEF DE LLAMADA</p>`,
+    `<h1 style="font-family:${FONT};font-size:30pt;font-weight:700;letter-spacing:-0.9pt;line-height:1.08;margin:0 0 8pt 0;color:${INK}">${esc(input.title)}</h1>`,
     input.brief?.headline
-      ? `<p style="font-size:12pt;color:#48484D;margin:0 0 8pt 0">${esc(input.brief.headline)}</p>`
+      ? `<p style="font-family:${FONT};font-size:14pt;font-weight:600;letter-spacing:-0.3pt;color:${INK_SOFT};margin:0 0 10pt 0;line-height:1.3">${esc(input.brief.headline)}</p>`
       : null,
-    `<p style="font-size:9.5pt;color:#8E8E94;margin:0">${meta}</p>`,
+    `<p style="font-size:10pt;color:${INK_FAINT};margin:0">${meta}</p>`,
     input.shareUrl
-      ? `<p style="font-size:9.5pt;margin:4pt 0 0 0"><a href="${esc(input.shareUrl)}">Ver la grabación en Fathom</a></p>`
+      ? `<p style="font-size:10pt;margin:5pt 0 0 0"><a href="${esc(input.shareUrl)}" style="color:${INK_SOFT}">Ver la grabación en Fathom</a></p>`
       : null,
-    `<hr style="border:none;border-top:2px solid #141416;margin:14pt 0 0 0">`,
+    `<div style="border-top:2px solid ${INK};margin:16pt 0 0 0;height:1px"></div>`,
   ]
     .filter((line): line is string => line !== null)
     .join("");
@@ -232,7 +255,22 @@ export function buildDocumentHtml(input: GoogleDocInput): string {
   ];
 
   const body = blocks.filter((block): block is string => Boolean(block)).join("");
-  return `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:Arial,sans-serif;color:#141416;font-size:11pt;line-height:1.5">${body}</body></html>`;
+
+  // El fondo va en la celda de una tabla a ancho completo, no en <body>: Drive descarta
+  // el color de fondo del documento al convertir HTML, y si el negro no llegase mientras
+  // el texto blanco sí, el documento saldría invisible. El fondo de una celda sí
+  // sobrevive a la conversión, así que el negro y la tinta blanca viajan juntos.
+  const shell =
+    `<table width="100%" cellpadding="28" cellspacing="0" ` +
+    `style="background-color:${PAPER};border-collapse:collapse;width:100%">` +
+    `<tr><td style="background-color:${PAPER};color:${INK}">${body}</td></tr></table>`;
+
+  return [
+    `<!DOCTYPE html><html><head><meta charset="utf-8"></head>`,
+    `<body style="font-family:${FONT};background-color:${PAPER};color:${INK};font-size:11pt;line-height:1.5;margin:0">`,
+    shell,
+    `</body></html>`,
+  ].join("");
 }
 
 export function buildDocumentName(input: GoogleDocInput): string {

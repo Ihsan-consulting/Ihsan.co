@@ -78,7 +78,13 @@ describe("buildDocumentHtml", () => {
     expect(text).toContain("Cierre de alcance");
     expect(text).toContain("RESUMEN EJECUTIVO");
     expect(text).toContain("DECISIONES CLAVE");
-    expect(text).toContain('<li style="margin-bottom:6pt">Aprobar fase 2</li>');
+    expect(text).toContain("Aprobar fase 2</li>");
+    // Fondo negro y tinta blanca: el negro va en la celda porque Drive descarta el
+    // fondo del documento, y sin él el texto blanco quedaría invisible.
+    expect(text).toContain("background-color:#000000");
+    expect(text).toContain("color:#FFFFFF");
+    expect(text).toContain("logo-ihsan.png");
+    expect(text).toContain("Inter");
     expect(text).toContain("PRÓXIMOS PASOS");
     expect(text).toContain("Enviar SOW el 2026-09-26");
     expect(text).toContain("RESUMEN DE FATHOM");
