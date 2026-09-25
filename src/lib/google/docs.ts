@@ -31,6 +31,8 @@ export type GoogleDocBrief = {
   keyDecisions: readonly string[];
   risks: readonly string[];
   nextSteps: readonly string[];
+  /** Tareas reescritas en español por el modelo; vacío en los briefs antiguos. */
+  tasks: readonly string[];
   sentiment: string | null;
 };
 
@@ -171,6 +173,24 @@ function bullets(items: readonly string[]): string {
   return rows ? `<ul style="margin:4pt 0 0 0">${rows}</ul>` : "";
 }
 
+/**
+ * Checklist con casillas. Se usa el carácter ☐ en vez de la lista de verificación nativa
+ * de Docs porque esa solo se crea con la API de Documents, que exigiría un ámbito mucho
+ * más ancho que `drive.file`. Visualmente es una casilla; marcarla se hace a mano.
+ */
+function checklist(items: readonly string[]): string {
+  const rows = items
+    .map((item) => item.trim())
+    .filter((item) => item.length > 0)
+    .map(
+      (item) =>
+        `<p style="margin:0 0 7pt 0;color:${INK};line-height:1.5">` +
+        `<span style="color:${INK_FAINT}">&#9744;</span>&nbsp;&nbsp;${esc(item)}</p>`,
+    )
+    .join("");
+  return rows;
+}
+
 /** Se respetan los párrafos del resumen: una línea en blanco separa bloques. */
 function paragraphs(value: string): string {
   return value
@@ -247,7 +267,13 @@ export function buildDocumentHtml(input: GoogleDocInput): string {
     // exhaustivo donde cada punto llega como enlace markdown con marca de tiempo. Se
     // comía el documento entero y enterraba el análisis. Quien quiera ese detalle tiene
     // el enlace a la grabación en la cabecera.
-    section("Tareas", bullets(input.actionItems)),
+    // Las tareas en español que reescribió el modelo; si el brief es anterior a ese
+    // campo se cae a las de Fathom, que llegan en inglés, antes que dejar la sección
+    // vacía y perder los compromisos.
+    section(
+      "Checklist",
+      checklist(input.brief?.tasks?.length ? input.brief.tasks : input.actionItems),
+    ),
     section("Asistentes", bullets(input.attendees)),
     // La transcripción completa se queda fuera a propósito: convertía cada documento en
     // ~37 páginas que nadie lee y enterraba lo único que se consulta —análisis, tono,

@@ -46,6 +46,7 @@ const INPUT = {
     keyDecisions: ["Aprobar fase 2"],
     risks: [],
     nextSteps: ["Enviar SOW el 2026-09-26"],
+    tasks: ["Enviar el SOW a Luis Cliente antes del viernes"],
     sentiment: "positivo",
   },
   fathomSummaryMarkdown: "## Resumen de Fathom",
@@ -90,7 +91,9 @@ describe("buildDocumentHtml", () => {
     // El volcado de Fathom se excluye: cada punto llegaba como enlace markdown con
     // marca de tiempo y se comía el documento, enterrando el análisis.
     expect(text).not.toContain("RESUMEN DE FATHOM");
-    expect(text).toContain("TAREAS");
+    expect(text).toContain("CHECKLIST");
+    expect(text).toContain("&#9744;");
+    expect(text).toContain("Enviar el SOW a Luis Cliente antes del viernes");
     expect(text).toContain("ASISTENTES");
     expect(text).toContain("Luis Cliente");
     // La transcripción se excluye a propósito: hacía documentos de ~37 páginas que
@@ -110,7 +113,7 @@ describe("buildDocumentHtml", () => {
 
     expect(text).not.toContain("RESUMEN EJECUTIVO");
     expect(text).not.toContain("RIESGOS");
-    expect(text).not.toContain("TAREAS");
+    expect(text).not.toContain("CHECKLIST");
     expect(text).not.toContain("TRANSCRIPCIÓN");
   });
 

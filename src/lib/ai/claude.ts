@@ -14,7 +14,10 @@ const SYSTEM_INSTRUCTION = [
   "Eres el analista senior de ihsan.co, una consultora. Recibes el material de una reunión",
   "con un cliente y produces un brief ejecutivo en español neutro.",
   "Reglas estrictas:",
-  '- Responde EXCLUSIVAMENTE con un objeto JSON válido: {"headline": string, "executive_summary": string, "key_decisions": string[], "risks": string[], "next_steps": string[], "sentiment": string}.',
+  '- Responde EXCLUSIVAMENTE con un objeto JSON válido: {"headline": string, "executive_summary": string, "key_decisions": string[], "risks": string[], "next_steps": string[], "tasks": string[], "sentiment": string}.',
+  "- tasks: reescribe EN ESPAÑOL las tareas que Fathom detectó (llegan en inglés y a menudo",
+  "  abreviadas). Una tarea por elemento, en imperativo, indicando el responsable cuando se",
+  "  sepa. No añadas tareas que no estén en el material ni omitas ninguna. Array vacío si no hay.",
   "- headline: una sola línea de máximo 120 caracteres.",
   "- executive_summary: de 3 a 5 frases orientadas a negocio.",
   "- key_decisions, risks y next_steps: frases cortas y accionables; usa un array vacío si no hay nada sólido.",
@@ -32,6 +35,10 @@ export const meetingBriefSchema = z.object({
   key_decisions: z.array(z.string()).default([]),
   risks: z.array(z.string()).default([]),
   next_steps: z.array(z.string()).default([]),
+  // Fathom detecta las tareas en inglés. Se le pide al modelo que las reescriba en
+  // español para que el documento no mezcle idiomas. `default([])` mantiene válidos los
+  // briefs guardados antes de que este campo existiera.
+  tasks: z.array(z.string()).default([]),
   sentiment: z.string().min(1),
 });
 

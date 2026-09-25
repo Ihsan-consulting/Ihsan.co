@@ -95,6 +95,7 @@ async function saveInsights(
     key_decisions: result.brief.key_decisions,
     risks: result.brief.risks,
     next_steps: result.brief.next_steps,
+    tasks: result.brief.tasks,
     sentiment: result.brief.sentiment,
     raw_response: result.raw,
   };
@@ -248,7 +249,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     const [existingInsight, existingDelivery] = await Promise.all([
       db
         .from("meeting_insights")
-        .select("headline, executive_summary, key_decisions, risks, next_steps, sentiment")
+        .select("headline, executive_summary, key_decisions, risks, next_steps, tasks, sentiment")
         .eq("recording_id", params.recordingId)
         .maybeSingle(),
       db
@@ -273,6 +274,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
         keyDecisions: asStringList(stored?.key_decisions),
         risks: asStringList(stored?.risks),
         nextSteps: asStringList(stored?.next_steps),
+        tasks: asStringList(stored?.tasks),
         sentiment: stored?.sentiment ?? null,
       });
       if (alreadyDelivered) {
@@ -311,6 +313,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
       keyDecisions: brief.brief.key_decisions,
       risks: brief.brief.risks,
       nextSteps: brief.brief.next_steps,
+      tasks: brief.brief.tasks,
       sentiment: brief.brief.sentiment ?? null,
     });
 

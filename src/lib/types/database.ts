@@ -120,6 +120,7 @@ export type Database = {
           model: string
           next_steps: Json
           raw_response: string | null
+          tasks: Json
           recording_id: number
           risks: Json
           sentiment: string | null
@@ -135,6 +136,7 @@ export type Database = {
           next_steps?: Json
           raw_response?: string | null
           recording_id: number
+          tasks?: Json
           risks?: Json
           sentiment?: string | null
         }
@@ -149,6 +151,7 @@ export type Database = {
           next_steps?: Json
           raw_response?: string | null
           recording_id?: number
+          tasks?: Json
           risks?: Json
           sentiment?: string | null
         }
