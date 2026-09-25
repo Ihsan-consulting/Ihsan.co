@@ -24,7 +24,10 @@ export const config = {
    * and the login surface itself. Making a route public means adding it here — the
    * default is protected.
    */
+  // `logo-ihsan.png` es público a propósito: Google Drive lo descarga sin sesión al
+  // convertir el brief en documento, y detrás del gate recibía un 307 a /login, de modo
+  // que el logo nunca aparecía. Es la marca, no información de ningún cliente.
   matcher: [
-    "/((?!api/webhooks/|api/health$|api/auth/|login$|_next/static|_next/image|favicon.ico).*)",
+    "/((?!api/webhooks/|api/health$|api/auth/|login$|logo-ihsan\\.png$|_next/static|_next/image|favicon.ico).*)",
   ],
 };
