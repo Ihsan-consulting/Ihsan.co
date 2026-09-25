@@ -87,7 +87,9 @@ describe("buildDocumentHtml", () => {
     expect(text).toContain("Inter");
     expect(text).toContain("PRÓXIMOS PASOS");
     expect(text).toContain("Enviar SOW el 2026-09-26");
-    expect(text).toContain("RESUMEN DE FATHOM");
+    // El volcado de Fathom se excluye: cada punto llegaba como enlace markdown con
+    // marca de tiempo y se comía el documento, enterrando el análisis.
+    expect(text).not.toContain("RESUMEN DE FATHOM");
     expect(text).toContain("TAREAS");
     expect(text).toContain("ASISTENTES");
     expect(text).toContain("Luis Cliente");

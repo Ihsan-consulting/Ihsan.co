@@ -243,9 +243,10 @@ export function buildDocumentHtml(input: GoogleDocInput): string {
   const blocks: Array<string | null> = [
     header,
     ...briefSections(input.brief),
-    input.fathomSummaryMarkdown
-      ? section("Resumen de Fathom", paragraphs(input.fathomSummaryMarkdown))
-      : null,
+    // El resumen propio de Fathom se queda fuera: no es un resumen, es un volcado
+    // exhaustivo donde cada punto llega como enlace markdown con marca de tiempo. Se
+    // comía el documento entero y enterraba el análisis. Quien quiera ese detalle tiene
+    // el enlace a la grabación en la cabecera.
     section("Tareas", bullets(input.actionItems)),
     section("Asistentes", bullets(input.attendees)),
     // La transcripción completa se queda fuera a propósito: convertía cada documento en

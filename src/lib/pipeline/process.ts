@@ -1,7 +1,7 @@
 import { generateMeetingBrief, type MeetingBriefResult } from "@/lib/ai/claude";
 import { sendDiscordBrief, type DiscordSendResult } from "@/lib/discord/notify";
 import { transcriptToPlainText, type FathomTranscriptEntry } from "@/lib/fathom/payload";
-import { createMeetingDoc, isGoogleConfigured } from "@/lib/google/docs";
+import { createMeetingDoc, isGoogleConfigured, type GoogleDocBrief } from "@/lib/google/docs";
 import { getAdminClient, type AdminClient } from "@/lib/supabase/admin";
 import type { Json, TablesInsert } from "@/lib/types/database";
 
@@ -27,6 +27,12 @@ type MeetingContext = {
   participants: string[];
   actionItems: string[];
 };
+
+/** Las tres listas del brief viven como `jsonb`, así que llegan sin tipar. */
+function asStringList(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string");
+}
 
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : "unknown_error";
@@ -159,7 +165,7 @@ async function syncGoogleDoc(
   db: AdminClient,
   recordingId: number,
   context: MeetingContext,
-  brief: Extract<MeetingBriefResult, { ok: true }>["brief"] | null,
+  brief: GoogleDocBrief | null,
 ): Promise<string | null> {
   if (context.googleDocId) return null;
   if (!isGoogleConfigured()) return null;
@@ -170,16 +176,7 @@ async function syncGoogleDoc(
       startedAt: context.startedAt,
       shareUrl: context.shareUrl,
       recordedByName: context.recordedByName,
-      brief: brief
-        ? {
-            headline: brief.headline,
-            executiveSummary: brief.executive_summary,
-            keyDecisions: brief.key_decisions,
-            risks: brief.risks,
-            nextSteps: brief.next_steps,
-            sentiment: brief.sentiment ?? null,
-          }
-        : null,
+      brief,
       fathomSummaryMarkdown: context.summaryMarkdown,
       actionItems: context.actionItems,
       attendees: context.participants,
@@ -251,7 +248,7 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     const [existingInsight, existingDelivery] = await Promise.all([
       db
         .from("meeting_insights")
-        .select("recording_id")
+        .select("headline, executive_summary, key_decisions, risks, next_steps, sentiment")
         .eq("recording_id", params.recordingId)
         .maybeSingle(),
       db
@@ -267,7 +264,17 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
 
     if (alreadyBriefed) {
       // Nothing left but the Drive mirror, which skips itself when the doc exists.
-      await syncGoogleDoc(db, params.recordingId, context, null);
+      // The stored brief is reused rather than passed as null: sending null produced
+      // documents with no analysis at all, only Fathom's raw dump.
+      const stored = existingInsight.data;
+      await syncGoogleDoc(db, params.recordingId, context, {
+        headline: stored?.headline ?? null,
+        executiveSummary: stored?.executive_summary ?? null,
+        keyDecisions: asStringList(stored?.key_decisions),
+        risks: asStringList(stored?.risks),
+        nextSteps: asStringList(stored?.next_steps),
+        sentiment: stored?.sentiment ?? null,
+      });
       if (alreadyDelivered) {
         await stampEvent(db, params.webhookId, null);
         return { ok: true, recordingId: params.recordingId };
@@ -298,7 +305,14 @@ export async function processMeeting(params: ProcessParams): Promise<ProcessResu
     await saveInsights(db, params.recordingId, brief);
     // Sequenced before Discord on purpose: the message carries the document link, so the
     // team gets one notification pointing at the full write-up instead of two.
-    const docUrl = await syncGoogleDoc(db, params.recordingId, context, brief.brief);
+    const docUrl = await syncGoogleDoc(db, params.recordingId, context, {
+      headline: brief.brief.headline,
+      executiveSummary: brief.brief.executive_summary,
+      keyDecisions: brief.brief.key_decisions,
+      risks: brief.brief.risks,
+      nextSteps: brief.brief.next_steps,
+      sentiment: brief.brief.sentiment ?? null,
+    });
 
     const delivery = await sendDiscordBrief({
       title: context.title,
