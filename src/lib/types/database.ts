@@ -125,12 +125,16 @@ export type Database = {
           risks: Json
           sentiment: string | null
           call_score: number | null
+          client_name: string | null
+          end_customer_name: string | null
           goals: Json | null
           objections: Json | null
           payments: Json | null
         }
         Insert: {
           call_score?: number | null
+          client_name?: string | null
+          end_customer_name?: string | null
           goals?: Json | null
           objections?: Json | null
           payments?: Json | null
@@ -150,6 +154,8 @@ export type Database = {
         }
         Update: {
           call_score?: number | null
+          client_name?: string | null
+          end_customer_name?: string | null
           goals?: Json | null
           objections?: Json | null
           payments?: Json | null
@@ -228,6 +234,7 @@ export type Database = {
           scheduled_end_time: string | null
           scheduled_start_time: string | null
           share_url: string | null
+          public_share_url: string | null
           shared_with: string | null
           title: string
           transcript: Json | null
@@ -252,6 +259,7 @@ export type Database = {
           scheduled_end_time?: string | null
           scheduled_start_time?: string | null
           share_url?: string | null
+          public_share_url?: string | null
           shared_with?: string | null
           title: string
           transcript?: Json | null
@@ -276,6 +284,7 @@ export type Database = {
           scheduled_end_time?: string | null
           scheduled_start_time?: string | null
           share_url?: string | null
+          public_share_url?: string | null
           shared_with?: string | null
           title?: string
           transcript?: Json | null

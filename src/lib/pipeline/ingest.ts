@@ -1,3 +1,4 @@
+import { publicShareUrl } from "@/lib/fathom/share";
 import { getAdminClient } from "@/lib/supabase/admin";
 import { toIsoOrNull, type FathomWebhookPayload } from "@/lib/fathom/payload";
 import type { Json, TablesInsert } from "@/lib/types/database";
@@ -18,6 +19,7 @@ function meetingRow(payload: FathomWebhookPayload): TablesInsert<"meetings"> {
     title: payload.title?.trim() || `Reunión ${payload.recording_id}`,
     meeting_url: payload.meeting_url ?? null,
     share_url: payload.url ?? null,
+    public_share_url: publicShareUrl(payload.share_url),
     transcript_language: payload.transcript_language ?? null,
     scheduled_start_time: toIsoOrNull(payload.scheduled_start_time),
     scheduled_end_time: toIsoOrNull(payload.scheduled_end_time),

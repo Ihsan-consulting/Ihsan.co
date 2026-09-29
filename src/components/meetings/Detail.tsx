@@ -14,6 +14,9 @@ function parseTimestamp(value: string | null): number | null {
 
 type RecordingPlayerProps = {
   shareUrl: string | null;
+  /** `fathom.video/embed/<token>` ya validado; con él se muestra el vídeo real. */
+  embedUrl?: string | null;
+  title?: string;
   durationLabel: string | null;
   totalSeconds: number | null;
   actionItems: ReadonlyArray<MeetingActionItem>;
@@ -34,6 +37,8 @@ const WAVE_BARS = [
  */
 export function RecordingPlayer({
   shareUrl,
+  embedUrl = null,
+  title = "Grabación de la llamada",
   durationLabel,
   totalSeconds,
   actionItems,
@@ -52,9 +57,22 @@ export function RecordingPlayer({
         Grabación
       </h2>
 
+      {embedUrl ? (
+        <div className={styles.videoStage}>
+          <iframe
+            className={styles.videoFrame}
+            src={embedUrl}
+            title={`Vídeo: ${title}`}
+            loading="lazy"
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
+          />
+        </div>
+      ) : (
       <div className={styles.playerStage}>
-        {/* Fathom no permite incrustar /calls/<id> (frame-ancestors 'none' y exige login),
-            así que la carátula es una previsualización animada que abre la grabación. */}
+        {/* Sin enlace público solo existe /calls/<id>, que Fathom no deja incrustar
+            (frame-ancestors 'none'), así que la carátula abre la grabación en Fathom. */}
         <span className={styles.stageGlow} aria-hidden="true" />
         <span className={styles.wave} aria-hidden="true">
           {WAVE_BARS.map((height, index) => (
@@ -91,6 +109,7 @@ export function RecordingPlayer({
           Grabación
         </span>
       </div>
+      )}
 
       <div className={styles.playerFoot}>
         <div className={styles.playerTrack}>
@@ -118,7 +137,7 @@ export function RecordingPlayer({
         <p className={styles.playerMeta}>
           <span className="num">00:00</span>
           <span className={styles.playerSpacer} />
-          <span>Se reproduce en Fathom</span>
+          <span>{embedUrl ? "Compromisos en la línea de tiempo" : "Se reproduce en Fathom"}</span>
           <span className="num">{durationLabel ?? "—"}</span>
         </p>
       </div>

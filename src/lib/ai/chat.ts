@@ -222,6 +222,8 @@ function digestBlock(digest: ChatDigest, index: number): string {
   const hasBrief = digest.headline !== null || digest.executiveSummary !== null;
   const lines = [
     `[${String(index)}] ${digest.title} — ${whenLine(digest.startedAt)}`,
+    digest.clientName ? `Cliente de ihsan.co: ${digest.clientName}` : null,
+    digest.endCustomerName ? `Cliente de ese cliente: ${digest.endCustomerName}` : null,
     digest.recordedByName ? `Grabada por: ${digest.recordedByName}` : null,
     typeof digest.callScore === "number"
       ? `Puntuación de la llamada: ${String(digest.callScore)}/100`

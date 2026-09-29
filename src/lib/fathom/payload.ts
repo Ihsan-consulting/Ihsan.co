@@ -54,6 +54,8 @@ export const fathomWebhookPayloadSchema = z.looseObject({
   title: z.string().nullish(),
   meeting_url: z.string().nullish(),
   url: z.string().nullish(),
+  // Enlace público (fathom.video/share/<token>): es el único que se puede incrustar.
+  share_url: z.string().nullish(),
   created_at: z.string().nullish(),
   scheduled_start_time: z.string().nullish(),
   scheduled_end_time: z.string().nullish(),

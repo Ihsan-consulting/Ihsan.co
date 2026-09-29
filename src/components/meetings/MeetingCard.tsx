@@ -12,6 +12,7 @@ import { StatusBadge, type Tone } from "@/components/ui/primitives";
 import type { MeetingSummary } from "@/lib/queries/meetings";
 
 import styles from "./card.module.css";
+import { ClientNames, meetingDisplayTitle } from "./ClientNames";
 
 const SENTIMENT_TONES: Record<string, Tone> = {
   positive: "ok",
@@ -87,7 +88,7 @@ export function MeetingCard({ meeting, active }: MeetingCardProps) {
           href={meeting.shareUrl}
           target="_blank"
           rel="noreferrer"
-          aria-label={`Abrir la grabación de «${meeting.title}» en Fathom`}
+          aria-label={`Abrir la grabación de «${meetingDisplayTitle(meeting)}» en Fathom`}
         >
           {thumbInner}
         </a>
@@ -101,7 +102,7 @@ export function MeetingCard({ meeting, active }: MeetingCardProps) {
         <div className={styles.cardHead}>
           <h3 className={styles.cardTitle}>
             <Link href={`/meetings/${meeting.recordingId}`} className={styles.cardLink}>
-              {meeting.title}
+              {meetingDisplayTitle(meeting)}
             </Link>
           </h3>
           <span className={styles.cardBrand}>{meeting.recordedByName ?? "Sin identificar"}</span>
@@ -110,6 +111,14 @@ export function MeetingCard({ meeting, active }: MeetingCardProps) {
             {formatDayMonth(meeting.startedAt)}, {formatTime(meeting.startedAt)}
           </time>
         </div>
+
+        {meeting.endCustomerName ? (
+          <ClientNames
+            clientName={meeting.clientName}
+            endCustomerName={meeting.endCustomerName}
+            size="sm"
+          />
+        ) : null}
 
         {meeting.hasBrief ? (
           <p className={styles.cardSummary}>

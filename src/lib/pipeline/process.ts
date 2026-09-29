@@ -34,6 +34,23 @@ function asStringList(value: unknown): string[] {
   return value.filter((item): item is string => typeof item === "string");
 }
 
+/**
+ * El correo y el lado (externo / ihsan.co) ayudan al modelo a saber quién es el cliente y
+ * quién es del equipo; solo con el nombre confundía a unos con otros.
+ */
+function describeParticipant(row: {
+  name: string | null;
+  email: string | null;
+  is_external: boolean | null;
+}): string {
+  const label = row.name ?? row.email ?? "";
+  if (!label) return "";
+  const email = row.email && row.name ? ` <${row.email}>` : "";
+  const side =
+    row.is_external === true ? " (externo)" : row.is_external === false ? " (equipo ihsan.co)" : "";
+  return `${label}${email}${side}`;
+}
+
 function toMessage(error: unknown): string {
   return error instanceof Error ? error.message : "unknown_error";
 }
@@ -58,7 +75,7 @@ async function loadContext(
 
   const invitees = await db
     .from("meeting_invitees")
-    .select("name, email")
+    .select("name, email, is_external")
     .eq("recording_id", recordingId);
 
   const actions = await db
@@ -75,7 +92,7 @@ async function loadContext(
     googleDocId: meeting.data.google_doc_id,
     transcript: transcriptToPlainText(toTranscriptEntries(meeting.data.transcript)),
     participants: (invitees.data ?? [])
-      .map((row) => row.name ?? row.email ?? "")
+      .map(describeParticipant)
       .filter((name) => name.length > 0),
     actionItems: (actions.data ?? []).map((row) => row.description),
   };
@@ -109,12 +126,14 @@ async function saveInsights(
 
 function extendedFields(
   result: Extract<MeetingBriefResult, { ok: true }>,
-): Pick<TablesInsert<"meeting_insights">, "objections" | "payments" | "goals" | "call_score"> {
+): Pick<TablesInsert<"meeting_insights">, "objections" | "payments" | "goals" | "call_score" | "client_name" | "end_customer_name"> {
   return {
     objections: result.brief.objections,
     payments: result.brief.payments,
     goals: result.brief.goals,
     call_score: result.brief.call_score,
+    client_name: result.brief.client_name,
+    end_customer_name: result.brief.end_customer_name,
   };
 }
 

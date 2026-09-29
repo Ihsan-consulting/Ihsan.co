@@ -30,7 +30,13 @@ function matchesFilter(meeting: MeetingSummary, filter: Filter): boolean {
 
 function matchesQuery(meeting: MeetingSummary, query: string): boolean {
   if (!query) return true;
-  const haystack = [meeting.title, meeting.headline, meeting.recordedByName]
+  const haystack = [
+    meeting.title,
+    meeting.clientName,
+    meeting.endCustomerName,
+    meeting.headline,
+    meeting.recordedByName,
+  ]
     .filter((value): value is string => typeof value === "string")
     .join(" ")
     .toLowerCase();

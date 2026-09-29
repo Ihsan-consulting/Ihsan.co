@@ -50,6 +50,9 @@ export type MeetingDigest = {
   payments?: Payment[] | null;
   goals?: string[] | null;
   callScore?: number | null;
+  /** Cliente de ihsan.co y, si aparece, el cliente de ese cliente. */
+  clientName?: string | null;
+  endCustomerName?: string | null;
 };
 
 type InsightRow = {
@@ -64,14 +67,18 @@ type InsightRow = {
   payments?: Json | null;
   goals?: Json | null;
   call_score?: number | null;
+  client_name?: string | null;
+  end_customer_name?: string | null;
 };
 
 const BASE_INSIGHT_COLUMNS =
   "recording_id, headline, executive_summary, key_decisions, risks, next_steps, sentiment";
-const EXTENDED_INSIGHT_COLUMNS = `${BASE_INSIGHT_COLUMNS}, objections, payments, goals, call_score`;
+const EXTENDED_INSIGHT_COLUMNS = `${BASE_INSIGHT_COLUMNS}, objections, payments, goals, call_score, client_name, end_customer_name`;
 
 /** Las filas llegan por fecha descendente: la primera de cada reunión es la vigente. */
-function latestInsightByMeeting(rows: readonly InsightRow[]): Map<number, InsightRow> {
+function latestInsightByMeeting(
+  rows: readonly InsightRow[],
+): Map<number, InsightRow> {
   const map = new Map<number, InsightRow>();
   for (const row of rows) {
     if (!map.has(row.recording_id)) map.set(row.recording_id, row);
@@ -85,7 +92,9 @@ type CommitmentRow = {
   assignee_name: string | null;
 };
 
-function groupCommitments(rows: readonly CommitmentRow[]): Map<number, DigestCommitment[]> {
+function groupCommitments(
+  rows: readonly CommitmentRow[],
+): Map<number, DigestCommitment[]> {
   const map = new Map<number, DigestCommitment[]>();
   for (const row of rows) {
     const list = map.get(row.recording_id) ?? [];
@@ -108,7 +117,9 @@ export async function listMeetingDigests(limit = 60): Promise<MeetingDigest[]> {
   const meetings = unwrap(
     await db
       .from("meetings")
-      .select("recording_id, title, recorded_by_name, recording_start_time, scheduled_start_time")
+      .select(
+        "recording_id, title, recorded_by_name, recording_start_time, scheduled_start_time",
+      )
       .order("recording_start_time", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(limit),
@@ -138,16 +149,21 @@ export async function listMeetingDigests(limit = 60): Promise<MeetingDigest[]> {
 
   // Si la migración de las columnas nuevas aún no está aplicada, el chat sigue
   // funcionando con el brief de siempre en vez de caerse.
-  const insightRows = extendedRows.error ? await readInsights(BASE_INSIGHT_COLUMNS) : extendedRows;
+  const insightRows = extendedRows.error
+    ? await readInsights(BASE_INSIGHT_COLUMNS)
+    : extendedRows;
 
   const insights = latestInsightByMeeting(unwrap(insightRows, "los briefs"));
-  const commitments = groupCommitments(unwrap(actionRows, "las tareas abiertas"));
+  const commitments = groupCommitments(
+    unwrap(actionRows, "las tareas abiertas"),
+  );
 
   return meetings.map((meeting) => {
     const insight = insights.get(meeting.recording_id);
     return {
       recordingId: meeting.recording_id,
-      title: meeting.title,
+      // Fathom titula casi todo igual: el nombre del cliente es lo que permite citar la llamada.
+      title: insight?.client_name ?? meeting.title,
       startedAt: meeting.recording_start_time ?? meeting.scheduled_start_time,
       recordedByName: meeting.recorded_by_name,
       headline: insight?.headline ?? null,
@@ -161,6 +177,8 @@ export async function listMeetingDigests(limit = 60): Promise<MeetingDigest[]> {
       payments: parsePayments(insight?.payments),
       goals: parseGoals(insight?.goals),
       callScore: parseCallScore(insight?.call_score),
+      clientName: insight?.client_name ?? null,
+      endCustomerName: insight?.end_customer_name ?? null,
     } satisfies MeetingDigest;
   });
 }

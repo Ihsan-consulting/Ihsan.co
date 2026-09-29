@@ -38,6 +38,9 @@ export type MeetingSummary = {
   /** `null` cuando el brief todavía no tiene análisis ampliado. */
   objectionsCount: number | null;
   paymentsCount: number | null;
+  /** Cliente de ihsan.co en la llamada y, si aparece, el cliente de ese cliente. */
+  clientName: string | null;
+  endCustomerName: string | null;
 };
 
 export type MeetingObjection = {
@@ -115,6 +118,10 @@ export type MeetingDetail = {
   recordingId: number;
   title: string;
   shareUrl: string | null;
+  /** Enlace público de Fathom; es el que permite incrustar el vídeo. */
+  publicShareUrl: string | null;
+  clientName: string | null;
+  endCustomerName: string | null;
   meetingUrl: string | null;
   transcriptLanguage: string | null;
   scheduledStartTime: string | null;
@@ -360,7 +367,9 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
   const [insightRows, deliveryRows, actionRows, inviteeRows] = await Promise.all([
     db
       .from("meeting_insights")
-      .select("recording_id, headline, sentiment, call_score, objections, payments")
+      .select(
+        "recording_id, headline, sentiment, call_score, objections, payments, client_name, end_customer_name",
+      )
       .in("recording_id", ids),
     db.from("deliveries").select("recording_id, status, error").in("recording_id", ids),
     db.from("action_items").select("recording_id, completed").in("recording_id", ids),
@@ -378,6 +387,8 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
     callScore: number | null;
     objectionsCount: number | null;
     paymentsCount: number | null;
+    clientName: string | null;
+    endCustomerName: string | null;
   };
   const insightByMeeting = new Map<number, InsightSummary>();
   for (const row of insights) {
@@ -388,6 +399,8 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
         callScore: toCallScore(row.call_score),
         objectionsCount: toObjections(row.objections)?.length ?? null,
         paymentsCount: toPayments(row.payments)?.length ?? null,
+        clientName: row.client_name,
+        endCustomerName: row.end_customer_name,
       });
     }
   }
@@ -445,6 +458,8 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
       callScore: insight?.callScore ?? null,
       objectionsCount: insight?.objectionsCount ?? null,
       paymentsCount: insight?.paymentsCount ?? null,
+      clientName: insight?.clientName ?? null,
+      endCustomerName: insight?.endCustomerName ?? null,
     } satisfies MeetingSummary;
   });
 }
@@ -494,6 +509,9 @@ export async function getMeetingDetail(recordingId: number): Promise<MeetingDeta
     recordingId: meeting.recording_id,
     title: meeting.title,
     shareUrl: meeting.share_url,
+    publicShareUrl: meeting.public_share_url,
+    clientName: insight?.client_name ?? null,
+    endCustomerName: insight?.end_customer_name ?? null,
     meetingUrl: meeting.meeting_url,
     transcriptLanguage: meeting.transcript_language,
     scheduledStartTime: meeting.scheduled_start_time,

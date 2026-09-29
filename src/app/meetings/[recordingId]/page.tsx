@@ -11,12 +11,14 @@ import {
   initials,
 } from "@/components/formatting";
 import { BriefPanel, SourceSummary } from "@/components/meetings/Brief";
+import { ClientNames, meetingDisplayTitle } from "@/components/meetings/ClientNames";
 import { ActionItemList } from "@/components/meetings/Commitments";
 import { DataDrawer } from "@/components/meetings/DataDrawer";
 import { RecordingPlayer, SendChecklist } from "@/components/meetings/Detail";
 import { ExtendedInsights } from "@/components/meetings/Insights";
 import { DeliveryTrail, GoogleDocPanel, InviteeList } from "@/components/meetings/Sidebar";
 import { StatusBadge } from "@/components/ui/primitives";
+import { fathomEmbedUrl } from "@/lib/fathom/share";
 import { getMeetingDetail } from "@/lib/queries/meetings";
 
 import styles from "../meetings.module.css";
@@ -50,7 +52,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!meeting) return { title: "Llamada no encontrada" };
 
   return {
-    title: meeting.title,
+    title: meetingDisplayTitle(meeting),
     description: meeting.brief?.headline ?? "Detalle de la llamada grabada con Fathom.",
   };
 }
@@ -96,7 +98,8 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       </div>
 
       <header className={styles.detailHeader}>
-        <h1 className={styles.detailTitle}>{meeting.title}</h1>
+        <h1 className={styles.detailTitle}>{meetingDisplayTitle(meeting)}</h1>
+        <ClientNames clientName={meeting.clientName} endCustomerName={meeting.endCustomerName} />
 
         <p className={styles.detailMeta}>
           <span>{formatLongDate(startedAt)}</span>
@@ -139,7 +142,9 @@ export default async function MeetingDetailPage({ params }: PageProps) {
       <div className={styles.detailColumns}>
         <div className={styles.detailMain}>
           <RecordingPlayer
-            shareUrl={meeting.shareUrl}
+            shareUrl={meeting.publicShareUrl ?? meeting.shareUrl}
+            embedUrl={fathomEmbedUrl(meeting.publicShareUrl)}
+            title={meetingDisplayTitle(meeting)}
             durationLabel={duration}
             totalSeconds={secondsBetween(startedAt, endedAt)}
             actionItems={meeting.actionItems}
