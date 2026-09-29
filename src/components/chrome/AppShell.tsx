@@ -24,19 +24,8 @@ const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     items: [
       { href: "/", label: "Inicio", icon: "M2 6.2L7.5 2l5.5 4.2V13H9.3V9.4H5.7V13H2z" },
       { href: "/meetings", label: "Llamadas", icon: "M2 4h11M2 7.5h11M2 11h7" },
-      { href: "/alertas", label: "Alertas", icon: "M7.5 2.2L13.4 12.8H1.6zM7.5 6v3M7.5 10.9v.1" },
-    ],
-  },
-  {
-    label: "Conocimiento",
-    items: [
-      {
-        href: "/clientes",
-        label: "Clientes",
-        icon: "M5.6 7.2a2.3 2.3 0 100-4.6 2.3 2.3 0 000 4.6zM1.6 13c0-2.2 1.8-3.6 4-3.6s4 1.4 4 3.6M10.6 9.6c1.6.2 2.8 1.5 2.8 3.4",
-      },
       { href: "/chat", label: "Chat", icon: "M2 3.2h11v7H6.8L3.6 12.6V10.2H2z" },
-      { href: "/equipo", label: "Equipo", icon: "M3 13V9.5M7.5 13V5M12 13V2" },
+      { href: "/alertas", label: "Alertas", icon: "M7.5 2.2L13.4 12.8H1.6zM7.5 6v3M7.5 10.9v.1" },
     ],
   },
 ];
@@ -123,6 +112,32 @@ export function AppShell({ children }: { children: ReactNode }) {
           <span className={styles.searchLabel}>Buscar</span>
           <span className={styles.searchKey} aria-hidden="true">
             ⌘K
+          </span>
+        </Link>
+
+        <Link
+          href="/chat"
+          className={styles.askAi}
+          data-active={isActive(pathname, "/chat") ? "true" : undefined}
+        >
+          <span className={styles.askAiGlow} aria-hidden="true" />
+          <svg
+            viewBox="0 0 16 16"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5.5" y="1.8" width="5" height="8" rx="2.5" />
+            <path d="M3.2 7.6a4.8 4.8 0 009.6 0M8 12.4v2" />
+          </svg>
+          <span className={styles.askAiBody}>
+            <span className={styles.askAiTitle}>Pregúntale a la IA</span>
+            <span className={styles.askAiNote}>Escribe o habla sobre tus llamadas</span>
           </span>
         </Link>
 

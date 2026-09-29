@@ -1,0 +1,425 @@
+/* --- Análisis ampliado: puntuación, objeciones, pagos, objetivos, to-do --- */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sp-6);
+  margin-bottom: var(--sp-9);
+}
+
+.gridWide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 760px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.section {
+  height: 100%;
+  padding: var(--sp-7);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-2xl);
+  background-color: var(--surface);
+}
+
+.sectionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sp-4);
+  margin-bottom: var(--sp-5);
+}
+
+.sectionTitle {
+  font-size: var(--t-lg);
+  font-weight: 600;
+  letter-spacing: -0.018em;
+}
+
+.sectionCount {
+  margin-left: auto;
+  font-size: var(--t-2xs);
+  color: var(--ink-4);
+}
+
+.empty {
+  font-size: var(--t-sm);
+  color: var(--ink-4);
+}
+
+/* Pendiente de re-análisis */
+
+.pending {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+  padding: var(--sp-5);
+  border: 1px dashed var(--line-hover);
+  border-radius: var(--r-lg);
+  background: linear-gradient(110deg, var(--shimmer-from) 30%, var(--shimmer-to) 50%, var(--shimmer-from) 70%);
+  background-size: 250% 100%;
+  animation: shimmer 2.6s linear infinite;
+}
+
+.pendingPulse {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: var(--r-pill);
+  background-color: var(--accent-ink);
+  box-shadow: 0 0 0 0 var(--accent-glow);
+  animation: pulse 1.8s var(--ease) infinite;
+}
+
+.pendingTitle {
+  font-size: var(--t-sm);
+  font-weight: 600;
+}
+
+.pendingBody {
+  margin-top: var(--sp-1);
+  font-size: var(--t-xs);
+  line-height: 1.55;
+  color: var(--ink-4);
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -150% 0;
+  }
+}
+
+@keyframes pulse {
+  70% {
+    box-shadow: 0 0 0 8px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* Puntuación */
+
+.scoreRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-7);
+}
+
+.gauge {
+  position: relative;
+  width: 9rem;
+  --gauge: var(--ok);
+}
+
+.gauge[data-tone="warn"] {
+  --gauge: var(--warn);
+}
+
+.gauge[data-tone="danger"] {
+  --gauge: var(--danger);
+}
+
+.gauge svg {
+  display: block;
+  width: 100%;
+  overflow: visible;
+}
+
+.gaugeTrack,
+.gaugeFill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+
+.gaugeTrack {
+  stroke: var(--surface-track);
+}
+
+.gaugeFill {
+  stroke: var(--gauge);
+  filter: drop-shadow(0 0 6px color-mix(in srgb, var(--gauge) 45%, transparent));
+  animation: gaugeIn 900ms var(--ease) both;
+}
+
+@keyframes gaugeIn {
+  from {
+    stroke-dasharray: 0 999;
+  }
+}
+
+.gaugeValue {
+  position: absolute;
+  inset: auto 0 0;
+  font-size: 2rem;
+  font-weight: 650;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  text-align: center;
+}
+
+.scoreVerdict {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.scoreVerdict[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.scoreVerdict[data-tone="warn"] {
+  color: var(--warn);
+}
+
+.scoreVerdict[data-tone="danger"] {
+  color: var(--danger);
+}
+
+.scoreHint {
+  max-width: 40ch;
+  margin-top: var(--sp-2);
+  font-size: var(--t-sm);
+  color: var(--ink-4);
+}
+
+/* Píldoras de estado */
+
+.pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 22px;
+  padding-inline: var(--sp-3);
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-3);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.pill[data-tone="ok"] {
+  background-color: var(--ok-wash);
+  color: var(--ok);
+}
+
+.pill[data-tone="warn"] {
+  background-color: var(--warn-wash);
+  color: var(--warn);
+}
+
+.pill[data-tone="danger"] {
+  background-color: var(--danger-wash);
+  color: var(--danger);
+}
+
+.pill[data-tone="accent"] {
+  background-color: rgba(94, 92, 230, 0.16);
+  color: var(--accent-ink);
+}
+
+/* Objeciones */
+
+.objections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.objection {
+  padding: var(--sp-5);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-sunk);
+}
+
+.objection[data-resolved="true"] {
+  border-left-color: var(--ok);
+}
+
+.objectionHead {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-4);
+}
+
+.objectionText {
+  flex: 1;
+  font-size: var(--t-md);
+  font-weight: 500;
+  line-height: 1.45;
+}
+
+.objectionAnswer {
+  margin-top: var(--sp-3);
+  font-size: var(--t-sm);
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+.answerLabel {
+  display: block;
+  margin-bottom: var(--sp-1);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-5);
+}
+
+/* Pagos */
+
+.payments {
+  display: flex;
+  flex-direction: column;
+}
+
+.payment {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: var(--sp-4);
+  padding: var(--sp-4) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.payment:last-child {
+  border-bottom: 0;
+}
+
+.paymentConcept {
+  font-size: var(--t-sm);
+}
+
+.paymentAmount {
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+/* Objetivos */
+
+.goals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.goal {
+  display: flex;
+  gap: var(--sp-4);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.goalIndex {
+  flex: none;
+  padding-top: 2px;
+  color: var(--accent-ink);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+}
+
+/* To-do */
+
+.todos {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: var(--sp-3) var(--sp-6);
+}
+
+.todo {
+  display: flex;
+  gap: var(--sp-3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+}
+
+.todoBox {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 3px;
+  border: 1.5px solid var(--line-hover);
+  border-radius: 4px;
+}
+
+/* Enviar a Discord (junto a «Abrir en Google Docs») */
+
+.discordWrap {
+  margin-top: var(--sp-3);
+}
+
+.discordButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-3);
+  width: 100%;
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid rgba(88, 101, 242, 0.45);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-sunk);
+  color: #a5acff;
+  font: inherit;
+  font-size: var(--t-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.discordButton:hover:not(:disabled),
+.discordButton:focus-visible {
+  border-color: #8891ff;
+  background-color: rgba(88, 101, 242, 0.12);
+}
+
+.discordButton:focus-visible {
+  outline: 2px solid #8891ff;
+  outline-offset: 2px;
+}
+
+.discordButton:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+.discordButton[data-state="sent"] {
+  border-color: color-mix(in srgb, var(--ok) 50%, transparent);
+  color: var(--ok);
+}
+
+.discordButton[data-state="error"] {
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
+  color: var(--danger);
+}
+
+.discordLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.discordStatus {
+  min-height: 1em;
+  margin-top: var(--sp-2);
+  font-size: var(--t-2xs);
+  color: var(--ink-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pending,
+  .pendingPulse,
+  .gaugeFill {
+    animation: none;
+  }
+}

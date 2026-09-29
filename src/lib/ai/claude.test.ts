@@ -59,6 +59,40 @@ describe("parseMeetingBrief", () => {
     expect(result.brief.key_decisions).toEqual(["Aprobar fase 2"]);
   });
 
+  it("sin análisis ampliado deja listas vacías y puntuación nula", () => {
+    const result = parseMeetingBrief(BRIEF_JSON);
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.brief.objections).toEqual([]);
+    expect(result.brief.payments).toEqual([]);
+    expect(result.brief.goals).toEqual([]);
+    expect(result.brief.call_score).toBeNull();
+  });
+
+  it("normaliza objeciones, pagos y puntuación y no tira el brief por uno mal formado", () => {
+    const result = parseMeetingBrief(
+      JSON.stringify({
+        ...JSON.parse(BRIEF_JSON),
+        objections: [{ objection: "Es caro", response: "Pago en 3 cuotas", resolved: true }],
+        payments: [{ concept: "Fase 2", amount: 4500, currency: "eur", status: "raro" }],
+        goals: "no es una lista",
+        call_score: 140.4,
+      }),
+    );
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.brief.objections).toEqual([
+      { objection: "Es caro", response: "Pago en 3 cuotas", resolved: true },
+    ]);
+    expect(result.brief.payments).toEqual([
+      { concept: "Fase 2", amount: 4500, currency: "EUR", status: "mencionado" },
+    ]);
+    expect(result.brief.goals).toEqual([]);
+    expect(result.brief.call_score).toBe(100);
+  });
+
   it("rechaza una respuesta que no cumple el esquema", () => {
     expect(parseMeetingBrief('{"headline":"Solo titular"}')).toEqual({
       ok: false,

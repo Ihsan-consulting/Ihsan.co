@@ -5,13 +5,91 @@
 }
 
 .playerStage {
+  position: relative;
   display: grid;
   place-items: center;
-  height: 8rem;
+  overflow: hidden;
+  aspect-ratio: 16 / 7;
+  min-height: 11rem;
+  max-height: 20rem;
   border: 1px solid var(--line-strong);
   border-bottom: 0;
   border-radius: var(--r-lg) var(--r-lg) 0 0;
-  background-color: #131316;
+  background:
+    radial-gradient(120% 90% at 15% 0%, rgba(94, 92, 230, 0.28), transparent 60%),
+    radial-gradient(90% 80% at 100% 100%, rgba(78, 217, 138, 0.12), transparent 60%),
+    linear-gradient(160deg, #17171c, #0d0d10);
+}
+
+.stageGlow {
+  position: absolute;
+  inset: -40%;
+  background: conic-gradient(from 0deg, transparent, rgba(94, 92, 230, 0.16), transparent 30%);
+  animation: spin 14s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.wave {
+  position: absolute;
+  inset: 22% 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3px;
+  opacity: 0.55;
+}
+
+.waveBar {
+  flex: 1;
+  max-width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--accent-ink), var(--accent));
+  transform-origin: center;
+  animation: wave 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes wave {
+  from {
+    transform: scaleY(0.25);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.playerCta {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-5);
+  padding: var(--sp-4) var(--sp-6) var(--sp-4) var(--sp-4);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-pill);
+  background-color: rgba(12, 12, 13, 0.72);
+  backdrop-filter: blur(10px);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
+}
+
+.playerCta:hover,
+.playerCta:focus-visible {
+  color: var(--ink);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.playerCta:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 3px;
 }
 
 .playerButton {
@@ -22,18 +100,86 @@
   border-radius: var(--r-pill);
   background-color: rgba(255, 255, 255, 0.95);
   color: var(--ink-invert);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
-  transition: transform var(--dur-fast) var(--ease);
+  box-shadow:
+    0 2px 10px rgba(0, 0, 0, 0.4),
+    0 0 0 0 rgba(255, 255, 255, 0.35);
+  animation: ring 2.4s var(--ease) infinite;
 }
 
-.playerButton:hover {
-  color: var(--ink-invert);
-  transform: scale(1.04);
+@keyframes ring {
+  70% {
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.4),
+      0 0 0 12px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow:
+      0 2px 10px rgba(0, 0, 0, 0.4),
+      0 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+.playerCtaText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.playerCtaTitle {
+  font-size: var(--t-md);
+  font-weight: 600;
+}
+
+.playerCtaMeta {
+  font-size: var(--t-2xs);
+  color: var(--ink-3);
+}
+
+.liveTag {
+  position: absolute;
+  top: var(--sp-4);
+  left: var(--sp-4);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  padding: 3px var(--sp-3);
+  border-radius: var(--r-pill);
+  background-color: rgba(0, 0, 0, 0.55);
+  color: var(--ink-2);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background-color: var(--danger);
+  animation: blink 1.4s steps(2, jump-none) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0.25;
+  }
 }
 
 .playerMissing {
+  position: relative;
+  z-index: 1;
   font-size: var(--t-s);
   color: var(--ink-4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stageGlow,
+  .waveBar,
+  .playerButton,
+  .liveDot {
+    animation: none;
+  }
 }
 
 .playerFoot {

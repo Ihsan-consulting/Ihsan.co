@@ -97,6 +97,7 @@ async function saveInsights(
     next_steps: result.brief.next_steps,
     tasks: result.brief.tasks,
     sentiment: result.brief.sentiment,
+    ...extendedFields(result),
     raw_response: result.raw,
   };
 
@@ -104,6 +105,45 @@ async function saveInsights(
     .from("meeting_insights")
     .upsert(row, { onConflict: "recording_id,model" });
   if (error) console.error("meeting_insights upsert failed:", error.message);
+}
+
+function extendedFields(
+  result: Extract<MeetingBriefResult, { ok: true }>,
+): Pick<TablesInsert<"meeting_insights">, "objections" | "payments" | "goals" | "call_score"> {
+  return {
+    objections: result.brief.objections,
+    payments: result.brief.payments,
+    goals: result.brief.goals,
+    call_score: result.brief.call_score,
+  };
+}
+
+/**
+ * Rellena el análisis ampliado (objeciones, pagos, objetivos, puntuación) de un brief que
+ * se generó antes de que existieran esos campos. Solo actualiza esas columnas: el brief,
+ * el documento y el aviso de Discord ya enviados no se tocan ni se reenvían.
+ */
+export async function reanalyzeMeeting(recordingId: number): Promise<ProcessResult> {
+  const db = getAdminClient();
+  const context = await loadContext(db, recordingId);
+  if (!context) return { ok: false, error: "meeting_not_found" };
+
+  const brief = await generateMeetingBrief({
+    title: context.title,
+    transcript: context.transcript,
+    summaryMarkdown: context.summaryMarkdown,
+    actionItems: context.actionItems,
+    participants: context.participants,
+  });
+  if (!brief.ok) return { ok: false, error: brief.reason };
+
+  const { error } = await db
+    .from("meeting_insights")
+    .update(extendedFields(brief))
+    .eq("recording_id", recordingId);
+  if (error) return { ok: false, error: `insights_update_failed: ${error.message}` };
+
+  return { ok: true, recordingId };
 }
 
 /** Re-runnable: `attempts` is read back so a retry increments instead of resetting. */

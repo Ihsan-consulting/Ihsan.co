@@ -1,0 +1,343 @@
+/* --- Ver toda la data: disparador + cajón modal -------------------------- */
+
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-3);
+  height: 32px;
+  padding-inline: var(--sp-5);
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-pill);
+  background-color: var(--surface-raised);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--t-sm);
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    border-color var(--dur-fast) var(--ease),
+    background-color var(--dur-fast) var(--ease);
+}
+
+.trigger:hover {
+  border-color: var(--line-hover);
+  background-color: var(--surface-hover);
+}
+
+.trigger:focus-visible,
+.tab:focus-visible,
+.close:focus-visible,
+.body:focus-visible {
+  outline: 2px solid var(--accent-ink);
+  outline-offset: 2px;
+}
+
+.dialog {
+  width: min(46rem, 100vw);
+  max-width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-left: 1px solid var(--line-strong);
+  background-color: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-pop);
+}
+
+.dialog[open] {
+  animation: slideIn var(--dur-slow) var(--ease);
+}
+
+.dialog::backdrop {
+  background-color: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding: var(--sp-7) var(--sp-7) var(--sp-5);
+}
+
+.kicker {
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+}
+
+.title {
+  margin-top: var(--sp-2);
+  font-size: var(--t-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border: 1px solid var(--line-control);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.close:hover {
+  color: var(--ink);
+  border-color: var(--line-hover);
+}
+
+.tabs {
+  display: flex;
+  gap: var(--sp-1);
+  overflow-x: auto;
+  padding: 0 var(--sp-7);
+  border-bottom: 1px solid var(--line-strong);
+  scrollbar-width: none;
+}
+
+.tab {
+  flex: none;
+  padding: var(--sp-4);
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--ink-4);
+  font: inherit;
+  font-size: var(--t-sm);
+  cursor: pointer;
+}
+
+.tab:hover {
+  color: var(--ink-2);
+}
+
+.tab[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--sp-7);
+  font-size: var(--t-md);
+  line-height: 1.6;
+}
+
+.block {
+  margin-top: var(--sp-7);
+}
+
+.block:first-child {
+  margin-top: 0;
+}
+
+.blockTitle {
+  margin-bottom: var(--sp-3);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.headline {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.prose {
+  margin-top: var(--sp-4);
+  margin-bottom: var(--sp-7);
+  color: var(--ink-2);
+}
+
+.muted {
+  color: var(--ink-4);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-2);
+  padding-left: 1.1em;
+  list-style: disc;
+}
+
+.list li::marker {
+  color: var(--accent-ink);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+}
+
+.card {
+  padding: var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-lg);
+  background-color: var(--surface-sunk);
+}
+
+.score {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding-inline: var(--sp-3);
+  border-radius: var(--r-pill);
+  background-color: var(--neutral-wash);
+  color: var(--ink-3);
+  font-size: var(--t-2xs);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.pill[data-tone="ok"] {
+  background-color: var(--ok-wash);
+  color: var(--ok);
+}
+
+.pill[data-tone="warn"] {
+  background-color: var(--warn-wash);
+  color: var(--warn);
+}
+
+.pill[data-tone="danger"] {
+  background-color: var(--danger-wash);
+  color: var(--danger);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--t-sm);
+}
+
+.table th {
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) 0;
+  border-bottom: 1px solid var(--line-strong);
+  color: var(--ink-4);
+  font-size: var(--t-2xs);
+  font-weight: 600;
+  text-align: left;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.table td {
+  padding: var(--sp-3) var(--sp-3) var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.error {
+  display: block;
+  margin-top: var(--sp-1);
+  color: var(--danger);
+  font-size: var(--t-2xs);
+  word-break: break-word;
+}
+
+.link {
+  color: var(--accent-ink);
+}
+
+.transcript {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+}
+
+.transcript li {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: var(--sp-4);
+}
+
+.tStamp {
+  padding-top: 2px;
+  color: var(--ink-4);
+  font-size: var(--t-2xs);
+}
+
+.tSpeaker {
+  display: block;
+  font-size: var(--t-sm);
+  color: var(--accent-ink);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 11rem 1fr;
+  gap: var(--sp-4);
+  padding: var(--sp-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row dt {
+  color: var(--ink-4);
+  font-size: var(--t-sm);
+}
+
+.row dd {
+  word-break: break-word;
+}
+
+@media (max-width: 560px) {
+  .row,
+  .transcript li {
+    grid-template-columns: 1fr;
+    gap: var(--sp-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog[open] {
+    animation: none;
+  }
+}

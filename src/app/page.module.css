@@ -63,19 +63,80 @@
 
 /* --- Retículas --------------------------------------------------------- */
 
-.stats {
+.kpis {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.75rem), 1fr));
   gap: var(--sp-5);
 }
 
-.split {
+/* Franja de salud del pipeline: secundaria a los KPI, enlaza a Alertas. */
+.health {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-3) var(--sp-8);
+  margin-top: var(--sp-5);
+  padding: var(--sp-5) var(--sp-7);
+  background-color: var(--surface-sunk);
+  border: 1px solid var(--line);
+  border-radius: var(--r-2xl);
+  color: var(--ink-3);
+  font-size: var(--t-sm);
+  transition: border-color var(--dur-fast) var(--ease);
+}
+
+.health:hover {
+  border-color: var(--line-hover);
+  color: var(--ink-3);
+}
+
+.healthItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+}
+
+.healthItem::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background-color: var(--ok);
+}
+
+.healthItem[data-tone="warn"]::before {
+  background-color: var(--warn);
+}
+
+.healthItem[data-tone="danger"]::before {
+  background-color: var(--danger);
+}
+
+.healthItem .num {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.healthCta {
+  margin-left: auto;
+  color: var(--accent-ink);
+  font-weight: 560;
+}
+
+/* Bloque principal ancho + raíl estrecho: jerarquía, no rejilla uniforme. */
+.focus {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 26.25rem), 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sp-5);
   align-items: start;
   margin-top: var(--sp-5);
   scroll-margin-top: var(--sp-8);
+}
+
+@media (min-width: 68rem) {
+  .focus {
+    grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr);
+  }
 }
 
 .rail {

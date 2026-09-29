@@ -17,7 +17,15 @@ type RecordingPlayerProps = {
   durationLabel: string | null;
   totalSeconds: number | null;
   actionItems: ReadonlyArray<MeetingActionItem>;
+  /** Asistentes de la llamada, para la carátula. */
+  participants?: number;
 };
+
+/** Alturas fijas (en %) de la onda decorativa: deterministas para que SSR e hidratación coincidan. */
+const WAVE_BARS = [
+  22, 38, 55, 34, 70, 48, 86, 62, 40, 58, 92, 66, 44, 30, 52, 78, 60, 36, 24, 46, 72, 88, 64,
+  42, 28, 50, 74, 56, 34, 20, 40, 62, 80, 58, 38, 26, 48, 68, 44, 30,
+];
 
 /**
  * Superficie de la grabación. El panel no reproduce audio: la reproducción vive
@@ -29,6 +37,7 @@ export function RecordingPlayer({
   durationLabel,
   totalSeconds,
   actionItems,
+  participants = 0,
 }: RecordingPlayerProps) {
   const markers = actionItems
     .map((item) => ({ item, seconds: parseTimestamp(item.timestamp) }))
@@ -44,21 +53,43 @@ export function RecordingPlayer({
       </h2>
 
       <div className={styles.playerStage}>
+        {/* Fathom no permite incrustar /calls/<id> (frame-ancestors 'none' y exige login),
+            así que la carátula es una previsualización animada que abre la grabación. */}
+        <span className={styles.stageGlow} aria-hidden="true" />
+        <span className={styles.wave} aria-hidden="true">
+          {WAVE_BARS.map((height, index) => (
+            <span
+              key={`bar-${String(index)}`}
+              className={styles.waveBar}
+              style={{ height: `${height}%`, animationDelay: `${(index % 9) * -0.13}s` }}
+            />
+          ))}
+        </span>
+
         {shareUrl ? (
-          <a
-            className={styles.playerButton}
-            href={shareUrl}
-            target="_blank"
-            rel="noreferrer"
-            aria-label="Abrir la grabación en Fathom"
-          >
-            <svg viewBox="0 0 12 14" width="12" height="14" fill="currentColor" aria-hidden="true">
-              <path d="M1 0.6l10 6.4-10 6.4z" />
-            </svg>
+          <a className={styles.playerCta} href={shareUrl} target="_blank" rel="noreferrer">
+            <span className={styles.playerButton} aria-hidden="true">
+              <svg viewBox="0 0 12 14" width="12" height="14" fill="currentColor">
+                <path d="M1 0.6l10 6.4-10 6.4z" />
+              </svg>
+            </span>
+            <span className={styles.playerCtaText}>
+              <span className={styles.playerCtaTitle}>Ver la llamada en Fathom</span>
+              <span className={styles.playerCtaMeta}>
+                {durationLabel ? <span className="num">{durationLabel}</span> : null}
+                {durationLabel && participants > 0 ? " · " : null}
+                {participants > 0 ? `${participants} participantes` : null}
+              </span>
+            </span>
           </a>
         ) : (
           <p className={styles.playerMissing}>Esta grabación no trae enlace público.</p>
         )}
+
+        <span className={styles.liveTag} aria-hidden="true">
+          <span className={styles.liveDot} />
+          Grabación
+        </span>
       </div>
 
       <div className={styles.playerFoot}>

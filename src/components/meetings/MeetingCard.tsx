@@ -29,6 +29,15 @@ function sentimentTone(value: string | null): Tone {
   return SENTIMENT_TONES[value.trim().toLowerCase()] ?? "neutral";
 }
 
+/** Onda decorativa de la miniatura (valores fijos: SSR e hidratación coinciden). */
+const THUMB_BARS = [30, 55, 80, 45, 65, 90, 50, 35, 70, 85, 40, 60, 75, 45, 30, 55, 80, 50];
+
+function scoreTone(score: number): Tone {
+  if (score >= 70) return "ok";
+  if (score >= 45) return "warn";
+  return "danger";
+}
+
 type MeetingCardProps = {
   meeting: MeetingSummary;
   /** Fila activa de la navegación con teclado. */
@@ -47,6 +56,15 @@ export function MeetingCard({ meeting, active }: MeetingCardProps) {
 
   const thumbInner = (
     <>
+      <span className={styles.thumbWave} aria-hidden="true">
+        {THUMB_BARS.map((height, index) => (
+          <span
+            key={`b-${String(index)}`}
+            className={styles.thumbBar}
+            style={{ height: `${height}%`, animationDelay: `${(index % 7) * -0.17}s` }}
+          />
+        ))}
+      </span>
       <span className={styles.thumbPlay} aria-hidden="true">
         <svg viewBox="0 0 9 10" width="10" height="11" fill="currentColor">
           <path d="M0.5 0.5l7.5 4.5-7.5 4.5z" />
@@ -131,7 +149,32 @@ export function MeetingCard({ meeting, active }: MeetingCardProps) {
             </span>
           ) : null}
 
+          {meeting.objectionsCount ? (
+            <span className={styles.cardMeta}>
+              <span className="num">{meeting.objectionsCount}</span>{" "}
+              {meeting.objectionsCount === 1 ? "objeción" : "objeciones"}
+            </span>
+          ) : null}
+
+          {meeting.paymentsCount ? (
+            <span className={styles.cardMeta} data-money="true">
+              <span className="num">{meeting.paymentsCount}</span>{" "}
+              {meeting.paymentsCount === 1 ? "pago" : "pagos"}
+            </span>
+          ) : null}
+
           <span className={styles.cardSpacer} />
+
+          {meeting.callScore !== null ? (
+            <span
+              className={styles.cardScore}
+              data-tone={scoreTone(meeting.callScore)}
+              title="Puntuación de la llamada (0-100)"
+            >
+              <span className="num">{meeting.callScore}</span>
+              <span className="srOnly"> de 100</span>
+            </span>
+          ) : null}
 
           <StatusBadge status={meeting.deliveryStatus} emptyLabel="Sin enviar" />
 

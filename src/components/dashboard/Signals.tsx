@@ -1,5 +1,5 @@
-import { formatDayMonth, initials } from "@/components/formatting";
-import { WEEKS, type TeamLoad, type ToneSlice } from "@/components/meetings/aggregate";
+import { formatDayMonth } from "@/components/formatting";
+import { WEEKS, type ToneSlice } from "@/components/meetings/aggregate";
 
 import styles from "./dashboard.module.css";
 
@@ -116,36 +116,6 @@ export function ToneBars({ slices }: { slices: ReadonlyArray<ToneSlice> }) {
               data-tone={slice.tone}
               style={{ width: `${slice.percent}%` }}
             />
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
-/** Carga por persona que grabó la llamada. */
-export function TeamLoadList({ rows }: { rows: ReadonlyArray<TeamLoad> }) {
-  if (rows.length === 0) {
-    return <p className={styles.emptyLine}>Sin grabaciones asignadas todavía.</p>;
-  }
-
-  return (
-    <ul className={styles.team}>
-      {rows.map((row) => (
-        <li key={row.name} className={styles.teamRow}>
-          <span className={styles.teamAvatar} aria-hidden="true">
-            {initials(row.name, null)}
-          </span>
-          <span className={styles.teamBody}>
-            <span className={styles.teamName}>{row.name}</span>
-            <span className={styles.teamNote} data-alert={row.failed > 0 ? "true" : undefined}>
-              {row.failed > 0
-                ? `${row.failed} entrega${row.failed === 1 ? "" : "s"} sin publicar`
-                : `${row.openItems} compromiso${row.openItems === 1 ? "" : "s"} abierto${row.openItems === 1 ? "" : "s"}`}
-            </span>
-          </span>
-          <span className={`num ${styles.teamCount}`}>
-            {row.meetings} llamada{row.meetings === 1 ? "" : "s"}
           </span>
         </li>
       ))}

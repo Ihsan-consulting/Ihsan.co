@@ -4,10 +4,21 @@ import { formatDateTime, initials, isoAttribute } from "@/components/formatting"
 import {
   ALERT_KIND_LABELS,
   ALERT_SEVERITY_LABELS,
+  type AlertKind,
   type OperationalAlert,
 } from "@/lib/queries/alerts";
 
 import styles from "./alerts.module.css";
+
+/** Qué hacer al abrir la llamada, según el tipo de alerta. */
+const ACTION_LABELS: Record<AlertKind, string> = {
+  entrega: "Abrir llamada y revisar el envío",
+  brief: "Abrir llamada",
+  pago: "Abrir llamada y confirmar el cobro",
+  puntuacion: "Abrir llamada y revisar el brief",
+  objecion: "Abrir llamada y preparar respuesta",
+  compromiso: "Abrir llamada y cerrar el compromiso",
+};
 
 /**
  * Tarjeta de alerta. La cita es texto de la propia fila —el error que devolvió el
@@ -15,7 +26,11 @@ import styles from "./alerts.module.css";
  */
 export function AlertCard({ alert }: { alert: OperationalAlert }) {
   return (
-    <article className={styles.card} aria-labelledby={`alerta-${alert.id}`}>
+    <article
+      className={styles.card}
+      data-severity={alert.severity}
+      aria-labelledby={`alerta-${alert.id}`}
+    >
       <div className={styles.body}>
         <div className={styles.top}>
           <span className={styles.severity} data-severity={alert.severity}>
@@ -29,9 +44,9 @@ export function AlertCard({ alert }: { alert: OperationalAlert }) {
         </div>
 
         <div className={styles.headline}>
-          <h2 id={`alerta-${alert.id}`} className={styles.title}>
+          <h3 id={`alerta-${alert.id}`} className={styles.title}>
             {alert.meetingTitle}
-          </h2>
+          </h3>
           <span className={styles.meta}>{alert.meta}</span>
         </div>
 
@@ -40,12 +55,7 @@ export function AlertCard({ alert }: { alert: OperationalAlert }) {
             <p className={styles.quoteText}>{alert.quote}</p>
             <p className={`num ${styles.quoteNote}`}>Grabación {alert.recordingId}</p>
           </blockquote>
-        ) : (
-          <p className={styles.quoteEmpty}>
-            No hay nada que citar: esta alerta nace del estado de la grabación, no de algo que se
-            dijera en la llamada.
-          </p>
-        )}
+        ) : null}
 
         <div className={styles.detail}>
           <p className={styles.detailTitle}>Qué implica</p>
@@ -55,7 +65,7 @@ export function AlertCard({ alert }: { alert: OperationalAlert }) {
 
       <div className={styles.foot}>
         <Link href={`/meetings/${String(alert.recordingId)}`} className={styles.action}>
-          Abrir llamada
+          {ACTION_LABELS[alert.kind]} <span aria-hidden="true">→</span>
         </Link>
         <span className={styles.spacer} aria-hidden="true" />
         <span className={styles.owner}>

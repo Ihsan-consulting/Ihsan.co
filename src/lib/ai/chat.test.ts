@@ -23,8 +23,18 @@ function reply(text: string) {
   return { content: [{ type: "text", text }] };
 }
 
-const { answerMeetingQuestion, buildChatPrompt, buildCorpus, normalizeHistory, MAX_CORPUS_CHARS } =
-  await import("@/lib/ai/chat");
+const {
+  answerMeetingQuestion,
+  buildContextBlock,
+  buildCorpus,
+  normalizeHistory,
+  parseCallScore,
+  parseGoals,
+  parseObjections,
+  parsePayments,
+  streamMeetingAnswer,
+  MAX_CORPUS_CHARS,
+} = await import("@/lib/ai/chat");
 
 function digest(overrides: Partial<MeetingDigest> = {}): MeetingDigest {
   return {
@@ -63,7 +73,9 @@ describe("buildCorpus", () => {
 
   it("marca el compromiso sin dueño en vez de atribuirlo a alguien", () => {
     const corpus = buildCorpus([
-      digest({ openCommitments: [{ description: "Revisar contrato", assigneeName: null }] }),
+      digest({
+        openCommitments: [{ description: "Revisar contrato", assigneeName: null }],
+      }),
     ]);
 
     expect(corpus.text).toContain("Revisar contrato (responsable: sin asignar)");
@@ -94,30 +106,129 @@ describe("buildCorpus", () => {
   });
 });
 
-describe("buildChatPrompt", () => {
-  it("encierra el material entre delimitadores y deja la pregunta fuera", () => {
-    const prompt = buildChatPrompt(buildCorpus([digest()]), "¿qué le prometimos a Marwane?");
+describe("buildContextBlock", () => {
+  it("encierra el material entre delimitadores y declara la fecha de hoy", () => {
+    const block = buildContextBlock(buildCorpus([digest()]), new Date("2026-09-29T10:00:00Z"));
 
-    expect(prompt).toContain("<reuniones>");
-    expect(prompt).toContain("</reuniones>");
-    expect(prompt).toContain("Pregunta del equipo: ¿qué le prometimos a Marwane?");
-    expect(prompt.indexOf("</reuniones>")).toBeLessThan(prompt.indexOf("Pregunta del equipo:"));
+    expect(block).toContain("<reuniones>");
+    expect(block).toContain("</reuniones>");
+    expect(block).toContain("2026-09-29");
+    expect(block).not.toContain("Pregunta del equipo");
   });
 
   it("avisa de las llamadas que quedaron fuera para que el modelo no las dé por vistas", () => {
-    const prompt = buildChatPrompt({ text: "x", included: 12, omitted: 8 }, "¿y el resto?");
+    const block = buildContextBlock({ text: "x", included: 12, omitted: 8 });
 
-    expect(prompt).toContain("AVISO: 8 llamadas más antiguas quedaron fuera");
+    expect(block).toContain("AVISO: 8 llamadas más antiguas quedaron fuera");
   });
 
   it("no inventa un aviso cuando cabe todo", () => {
-    expect(buildChatPrompt(buildCorpus([digest()]), "¿algo?")).not.toContain("AVISO");
+    expect(buildContextBlock(buildCorpus([digest()]))).not.toContain("AVISO");
   });
 
   it("declara el vacío cuando no hay ninguna llamada archivada", () => {
-    expect(buildChatPrompt(buildCorpus([]), "¿algo?")).toContain(
-      "(no hay ninguna llamada archivada)",
-    );
+    expect(buildContextBlock(buildCorpus([]))).toContain("(no hay ninguna llamada archivada)");
+  });
+});
+
+describe("análisis ampliado en el corpus", () => {
+  it("incluye objeciones, pagos, objetivos y puntuación cuando existen", () => {
+    const corpus = buildCorpus([
+      digest({
+        objections: [
+          {
+            objection: "Es caro",
+            response: "Pago en dos plazos",
+            resolved: true,
+          },
+        ],
+        payments: [
+          {
+            concept: "Fase 2",
+            amount: 4500,
+            currency: "EUR",
+            status: "acordado",
+          },
+        ],
+        goals: ["Lanzar en noviembre"],
+        callScore: 82,
+      }),
+    ]);
+
+    expect(corpus.text).toContain("Es caro → respuesta: Pago en dos plazos [resuelta]");
+    expect(corpus.text).toMatch(/Fase 2: 4\.?500 EUR \[acordado\]/);
+    expect(corpus.text).toContain("Lanzar en noviembre");
+    expect(corpus.text).toContain("Puntuación de la llamada: 82/100");
+  });
+
+  it("dice «sin datos» en filas antiguas en vez de callarlo o inventar", () => {
+    const corpus = buildCorpus([digest({ objections: null, payments: null })]);
+
+    expect(corpus.text).toContain("Objeciones: sin datos");
+    expect(corpus.text).toContain("Pagos: sin datos");
+    expect(corpus.text).not.toContain("Puntuación");
+  });
+
+  it("marca el importe ausente en vez de poner un número", () => {
+    const corpus = buildCorpus([
+      digest({
+        payments: [
+          {
+            concept: "Retainer",
+            amount: null,
+            currency: null,
+            status: "mencionado",
+          },
+        ],
+      }),
+    ]);
+
+    expect(corpus.text).toContain("Retainer: importe no indicado [mencionado]");
+  });
+});
+
+describe("parsers de columnas jsonb", () => {
+  it("parseObjections descarta basura y normaliza resolved", () => {
+    expect(
+      parseObjections([
+        { objection: " Precio ", response: "", resolved: "sí" },
+        { objection: "" },
+        "texto suelto",
+      ]),
+    ).toEqual([{ objection: "Precio", response: null, resolved: false }]);
+    expect(parseObjections(null)).toBeNull();
+    expect(parseObjections([])).toEqual([]);
+  });
+
+  it("parsePayments valida importe y estado", () => {
+    expect(
+      parsePayments([
+        { concept: "Setup", amount: "mil", currency: "USD", status: "raro" },
+        {
+          concept: "Mensualidad",
+          amount: 900,
+          currency: "EUR",
+          status: "pagado",
+        },
+      ]),
+    ).toEqual([
+      { concept: "Setup", amount: null, currency: "USD", status: "mencionado" },
+      {
+        concept: "Mensualidad",
+        amount: 900,
+        currency: "EUR",
+        status: "pagado",
+      },
+    ]);
+    expect(parsePayments(undefined)).toBeNull();
+  });
+
+  it("parseGoals y parseCallScore aceptan sólo valores válidos", () => {
+    expect(parseGoals(["  Crecer ", 3, ""])).toEqual(["Crecer"]);
+    expect(parseGoals({})).toBeNull();
+    expect(parseCallScore(77.6)).toBe(78);
+    expect(parseCallScore(140)).toBeNull();
+    expect(parseCallScore(null)).toBeNull();
   });
 });
 
@@ -169,27 +280,39 @@ describe("answerMeetingQuestion", () => {
     await answerMeetingQuestion({ question: "¿y esto?", digests: [digest()] });
 
     const call = create.mock.calls[0]?.[0] as {
-      system: string;
+      system: { text: string; cache_control?: { type: string } }[];
       messages: { role: string; content: string }[];
     };
-    expect(call.system).toContain("nunca");
-    expect(call.system).toContain("instrucciones");
-    expect(call.messages.at(-1)?.content).toContain("<reuniones>");
+    expect(call.system[0]?.text).toContain("nunca");
+    expect(call.system[0]?.text).toContain("instrucciones");
+    // El material va en un bloque de sistema cacheable, no mezclado con la pregunta.
+    expect(call.system[1]?.text).toContain("<reuniones>");
+    expect(call.system[1]?.cache_control).toEqual({ type: "ephemeral" });
+    expect(call.messages.at(-1)?.content).toBe("Pregunta del equipo: ¿y esto?");
     expect(call.messages.at(-1)?.role).toBe("user");
   });
 
   it("devuelve un fallo controlado en vez de lanzar cuando la API falla", async () => {
     create.mockRejectedValue(new Error("429 quota exceeded"));
 
-    const result = await answerMeetingQuestion({ question: "¿algo?", digests: [digest()] });
+    const result = await answerMeetingQuestion({
+      question: "¿algo?",
+      digests: [digest()],
+    });
 
-    expect(result).toMatchObject({ ok: false, reason: "anthropic_request_failed" });
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "anthropic_request_failed",
+    });
   });
 
   it("trata una respuesta vacía como fallo", async () => {
     create.mockResolvedValue({ content: [] });
 
-    const result = await answerMeetingQuestion({ question: "¿algo?", digests: [digest()] });
+    const result = await answerMeetingQuestion({
+      question: "¿algo?",
+      digests: [digest()],
+    });
 
     expect(result).toEqual({ ok: false, reason: "empty_model_response" });
   });
@@ -197,9 +320,61 @@ describe("answerMeetingQuestion", () => {
   it("no llama al modelo si no hay clave configurada", async () => {
     env.ANTHROPIC_API_KEY = undefined;
 
-    const result = await answerMeetingQuestion({ question: "¿algo?", digests: [digest()] });
+    const result = await answerMeetingQuestion({
+      question: "¿algo?",
+      digests: [digest()],
+    });
 
     expect(result).toEqual({ ok: false, reason: "anthropic_api_key_missing" });
     expect(create).not.toHaveBeenCalled();
+  });
+});
+
+describe("streamMeetingAnswer", () => {
+  async function collect(chunks: AsyncIterable<string>): Promise<string> {
+    let out = "";
+    for await (const chunk of chunks) out += chunk;
+    return out;
+  }
+
+  it("emite sólo los deltas de texto del stream", async () => {
+    create.mockResolvedValue(
+      (async function* () {
+        yield { type: "message_start" };
+        yield {
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "**Sí.** " },
+        };
+        yield {
+          type: "content_block_delta",
+          delta: { type: "text_delta", text: "Consta." },
+        };
+        yield { type: "message_stop" };
+      })(),
+    );
+
+    const result = await streamMeetingAnswer({
+      question: "¿algo?",
+      digests: [digest()],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(await collect(result.chunks)).toBe("**Sí.** Consta.");
+    expect((create.mock.calls[0]?.[0] as { stream: boolean }).stream).toBe(true);
+  });
+
+  it("devuelve el fallo de arranque como valor", async () => {
+    create.mockRejectedValue(new Error("401"));
+
+    const result = await streamMeetingAnswer({
+      question: "¿algo?",
+      digests: [digest()],
+    });
+
+    expect(result).toMatchObject({
+      ok: false,
+      reason: "anthropic_request_failed",
+    });
   });
 });

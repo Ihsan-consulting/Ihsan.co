@@ -228,3 +228,92 @@
     height: 5.5rem;
   }
 }
+
+/* --- Previsualización animada de la grabación + puntuación ---------------- */
+
+.thumb {
+  background:
+    radial-gradient(110% 90% at 10% 0%, rgba(94, 92, 230, 0.3), transparent 65%),
+    linear-gradient(160deg, #17171c, #0d0d10);
+}
+
+.thumbWave {
+  position: absolute;
+  inset: 26% 10%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2px;
+  opacity: 0.5;
+  transition: opacity var(--dur) var(--ease);
+}
+
+.thumbBar {
+  flex: 1;
+  max-width: 3px;
+  border-radius: 2px;
+  background-color: var(--accent-ink);
+  transform: scaleY(0.35);
+}
+
+.thumb:hover .thumbWave,
+.card:hover .thumbWave {
+  opacity: 0.85;
+}
+
+.thumb:hover .thumbBar,
+.card:hover .thumbBar,
+.card[data-active="true"] .thumbBar {
+  animation: thumbWave 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes thumbWave {
+  from {
+    transform: scaleY(0.2);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.thumbPlay {
+  position: relative;
+  z-index: 1;
+}
+
+.cardMeta[data-money="true"] {
+  color: var(--ok);
+}
+
+.cardScore {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 22px;
+  padding-inline: var(--sp-2);
+  border: 1px solid currentColor;
+  border-radius: var(--r-pill);
+  font-size: var(--t-2xs);
+  font-weight: 700;
+}
+
+.cardScore[data-tone="ok"] {
+  color: var(--ok);
+  background-color: var(--ok-wash);
+}
+
+.cardScore[data-tone="warn"] {
+  color: var(--warn);
+  background-color: var(--warn-wash);
+}
+
+.cardScore[data-tone="danger"] {
+  color: var(--danger);
+  background-color: var(--danger-wash);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumbBar {
+    animation: none !important;
+  }
+}

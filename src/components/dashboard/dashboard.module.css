@@ -146,68 +146,6 @@
   background-color: var(--danger);
 }
 
-/* --- Carga del equipo -------------------------------------------------- */
-
-.team {
-  display: flex;
-  flex-direction: column;
-}
-
-.teamRow {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-5);
-  padding-block: var(--sp-5);
-  border-top: 1px solid var(--line);
-}
-
-.team > li:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-
-.teamAvatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--r-pill);
-  background-color: var(--neutral-wash);
-  color: var(--ink-2);
-  font-size: var(--t-2xs);
-  font-weight: 600;
-}
-
-.teamBody {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.teamName {
-  font-size: var(--t-md);
-  font-weight: 550;
-  letter-spacing: -0.012em;
-}
-
-.teamNote {
-  margin-top: 2px;
-  font-size: var(--t-xs);
-  color: var(--ink-4);
-}
-
-.teamNote[data-alert="true"] {
-  color: var(--danger);
-}
-
-.teamCount {
-  flex: none;
-  font-size: var(--t-s);
-  color: var(--ink-4);
-}
-
 /* --- Pendientes de envío ----------------------------------------------- */
 
 .sendList {

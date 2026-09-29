@@ -33,6 +33,32 @@ export type MeetingSummary = {
   attendeesExternal: number;
   actionItemsOpen: number;
   actionItemsTotal: number;
+  /** Nota 0-100 del análisis ampliado; `null` si el brief es anterior a esa versión. */
+  callScore: number | null;
+  /** `null` cuando el brief todavía no tiene análisis ampliado. */
+  objectionsCount: number | null;
+  paymentsCount: number | null;
+};
+
+export type MeetingObjection = {
+  objection: string;
+  response: string | null;
+  resolved: boolean;
+};
+
+export type PaymentStatus = "acordado" | "pendiente" | "pagado" | "mencionado";
+
+export type MeetingPayment = {
+  concept: string;
+  amount: number | null;
+  currency: string | null;
+  status: PaymentStatus;
+};
+
+export type TranscriptLine = {
+  speaker: string | null;
+  text: string;
+  timestamp: string | null;
 };
 
 export type MeetingBrief = {
@@ -45,6 +71,15 @@ export type MeetingBrief = {
   model: string;
   language: string;
   createdAt: string;
+  tasks: string[];
+  /**
+   * Campos del análisis ampliado. `null` significa que el brief se generó antes de
+   * que existieran (pendiente de re-análisis), no que la llamada no los tenga.
+   */
+  objections: MeetingObjection[] | null;
+  payments: MeetingPayment[] | null;
+  goals: string[] | null;
+  callScore: number | null;
 };
 
 export type MeetingActionItem = {
@@ -93,6 +128,7 @@ export type MeetingDetail = {
   fathomSummaryTemplate: string | null;
   fathomSummaryMarkdown: string | null;
   hasTranscript: boolean;
+  transcript: TranscriptLine[];
   googleDocUrl: string | null;
   googleDocSyncedAt: string | null;
   createdAt: string;
@@ -193,6 +229,73 @@ export function toTextList(value: Json | null | undefined): string[] {
   return out;
 }
 
+type JsonRecord = { [key: string]: Json | undefined };
+
+function asRecord(value: Json | undefined): JsonRecord | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? (value as JsonRecord) : null;
+}
+
+function asText(value: Json | undefined): string | null {
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+export function toObjections(value: Json | null | undefined): MeetingObjection[] | null {
+  if (!Array.isArray(value)) return null;
+  const out: MeetingObjection[] = [];
+  for (const entry of value) {
+    const record = asRecord(entry);
+    const objection = record ? asText(record.objection) : asText(entry);
+    if (!objection) continue;
+    out.push({
+      objection,
+      response: record ? asText(record.response) : null,
+      resolved: record?.resolved === true,
+    });
+  }
+  return out;
+}
+
+const PAYMENT_STATUSES: ReadonlySet<string> = new Set(["acordado", "pendiente", "pagado", "mencionado"]);
+
+export function toPayments(value: Json | null | undefined): MeetingPayment[] | null {
+  if (!Array.isArray(value)) return null;
+  const out: MeetingPayment[] = [];
+  for (const entry of value) {
+    const record = asRecord(entry);
+    const concept = record ? asText(record.concept) : null;
+    if (!record || !concept) continue;
+    const amount = typeof record.amount === "number" && Number.isFinite(record.amount) ? record.amount : null;
+    const status = typeof record.status === "string" && PAYMENT_STATUSES.has(record.status)
+      ? (record.status as PaymentStatus)
+      : "mencionado";
+    out.push({ concept, amount, currency: asText(record.currency), status });
+  }
+  return out;
+}
+
+export function toCallScore(value: number | null | undefined): number | null {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  return Math.min(Math.max(Math.round(value), 0), 100);
+}
+
+/** Transcripción de Fathom: lista de `{ speaker: { display_name }, text, timestamp }`. */
+export function toTranscript(value: Json | null | undefined): TranscriptLine[] {
+  if (!Array.isArray(value)) return [];
+  const out: TranscriptLine[] = [];
+  for (const entry of value) {
+    const record = asRecord(entry);
+    const text = record ? asText(record.text) : null;
+    if (!record || !text) continue;
+    const speakerRecord = asRecord(record.speaker);
+    const speaker =
+      (speakerRecord ? asText(speakerRecord.display_name) ?? asText(speakerRecord.name) : null) ??
+      asText(record.speaker) ??
+      asText(record.speaker_name);
+    out.push({ speaker, text, timestamp: asText(record.timestamp) });
+  }
+  return out;
+}
+
 function toDeliveryStatus(value: string): DeliveryStatus {
   if (value === "sent" || value === "failed") return value;
   return "pending";
@@ -255,7 +358,10 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
   const ids = meetings.map((meeting) => meeting.recording_id);
 
   const [insightRows, deliveryRows, actionRows, inviteeRows] = await Promise.all([
-    db.from("meeting_insights").select("recording_id, headline, sentiment").in("recording_id", ids),
+    db
+      .from("meeting_insights")
+      .select("recording_id, headline, sentiment, call_score, objections, payments")
+      .in("recording_id", ids),
     db.from("deliveries").select("recording_id, status, error").in("recording_id", ids),
     db.from("action_items").select("recording_id, completed").in("recording_id", ids),
     db.from("meeting_invitees").select("recording_id, is_external").in("recording_id", ids),
@@ -266,10 +372,23 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
   const actions = unwrap(actionRows, "las tareas");
   const invitees = unwrap(inviteeRows, "los asistentes");
 
-  const insightByMeeting = new Map<number, { headline: string | null; sentiment: string | null }>();
+  type InsightSummary = {
+    headline: string | null;
+    sentiment: string | null;
+    callScore: number | null;
+    objectionsCount: number | null;
+    paymentsCount: number | null;
+  };
+  const insightByMeeting = new Map<number, InsightSummary>();
   for (const row of insights) {
     if (!insightByMeeting.has(row.recording_id)) {
-      insightByMeeting.set(row.recording_id, { headline: row.headline, sentiment: row.sentiment });
+      insightByMeeting.set(row.recording_id, {
+        headline: row.headline,
+        sentiment: row.sentiment,
+        callScore: toCallScore(row.call_score),
+        objectionsCount: toObjections(row.objections)?.length ?? null,
+        paymentsCount: toPayments(row.payments)?.length ?? null,
+      });
     }
   }
 
@@ -323,6 +442,9 @@ export async function listMeetings(limit = 60): Promise<MeetingSummary[]> {
       attendeesExternal: attendees?.external ?? 0,
       actionItemsOpen: counts?.open ?? 0,
       actionItemsTotal: counts?.total ?? 0,
+      callScore: insight?.callScore ?? null,
+      objectionsCount: insight?.objectionsCount ?? null,
+      paymentsCount: insight?.paymentsCount ?? null,
     } satisfies MeetingSummary;
   });
 }
@@ -385,6 +507,7 @@ export async function getMeetingDetail(recordingId: number): Promise<MeetingDeta
     fathomSummaryTemplate: meeting.default_summary_template,
     fathomSummaryMarkdown: meeting.default_summary_markdown,
     hasTranscript: meeting.transcript !== null,
+    transcript: toTranscript(meeting.transcript),
     googleDocUrl: meeting.google_doc_url,
     googleDocSyncedAt: meeting.google_doc_synced_at,
     createdAt: meeting.created_at,
@@ -400,6 +523,11 @@ export async function getMeetingDetail(recordingId: number): Promise<MeetingDeta
           model: insight.model,
           language: insight.language,
           createdAt: insight.created_at,
+          tasks: toTextList(insight.tasks),
+          objections: toObjections(insight.objections),
+          payments: toPayments(insight.payments),
+          goals: insight.goals === null ? null : toTextList(insight.goals),
+          callScore: toCallScore(insight.call_score),
         }
       : null,
     actionItems: actions.map((row) => ({

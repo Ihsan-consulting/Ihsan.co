@@ -2,6 +2,7 @@ import { formatDateTime, initials } from "@/components/formatting";
 import { EmptyState, StatusBadge } from "@/components/ui/primitives";
 import type { MeetingDelivery, MeetingInvitee } from "@/lib/queries/meetings";
 
+import { DiscordButton } from "./DiscordButton";
 import styles from "./rail.module.css";
 
 export function InviteeList({ invitees }: { invitees: MeetingInvitee[] }) {
@@ -52,6 +53,7 @@ export function InviteeList({ invitees }: { invitees: MeetingInvitee[] }) {
 }
 
 type GoogleDocPanelProps = {
+  recordingId: number;
   docUrl: string | null;
   syncedAt: string | null;
 };
@@ -61,7 +63,7 @@ type GoogleDocPanelProps = {
  * solo lo crea cuando Google está configurado, y un enlace muerto sería peor que
  * decirlo claro.
  */
-export function GoogleDocPanel({ docUrl, syncedAt }: GoogleDocPanelProps) {
+export function GoogleDocPanel({ recordingId, docUrl, syncedAt }: GoogleDocPanelProps) {
   return (
     <section aria-labelledby="documento" className={styles.railPanel}>
       <div className={styles.railHead}>
@@ -87,6 +89,7 @@ export function GoogleDocPanel({ docUrl, syncedAt }: GoogleDocPanelProps) {
           procesa la grabación con Google configurado.
         </p>
       )}
+      <DiscordButton recordingId={recordingId} />
     </section>
   );
 }

@@ -7,14 +7,24 @@ import { getEnv } from "@/lib/env";
  * keeps us inside the model context and keeps the per-meeting cost predictable.
  */
 export const MAX_TRANSCRIPT_CHARS = 40_000;
-const MAX_OUTPUT_TOKENS = 2048;
+const MAX_OUTPUT_TOKENS = 3072;
 const TEMPERATURE = 0.2;
 
 const SYSTEM_INSTRUCTION = [
   "Eres el analista senior de ihsan.co, una consultora. Recibes el material de una reunión",
   "con un cliente y produces un brief ejecutivo en español neutro.",
   "Reglas estrictas:",
-  '- Responde EXCLUSIVAMENTE con un objeto JSON válido: {"headline": string, "executive_summary": string, "key_decisions": string[], "risks": string[], "next_steps": string[], "tasks": string[], "sentiment": string}.',
+  '- Responde EXCLUSIVAMENTE con un objeto JSON válido: {"headline": string, "executive_summary": string, "key_decisions": string[], "risks": string[], "next_steps": string[], "tasks": string[], "sentiment": string, "objections": {"objection": string, "response": string | null, "resolved": boolean}[], "payments": {"concept": string, "amount": number | null, "currency": string | null, "status": "acordado" | "pendiente" | "pagado" | "mencionado"}[], "goals": string[], "call_score": number}.',
+  "- objections: cada objeción o duda de compra que planteó el cliente (precio, tiempo, confianza,",
+  "  encaje, decisión de terceros…), cómo se respondió (null si nadie la respondió) y si quedó",
+  "  resuelta en la propia llamada. Array vacío si no hubo ninguna.",
+  "- payments: solo importes, cuotas o condiciones de pago que se mencionan de verdad. amount es",
+  "  un número sin símbolos (null si no se dijo cifra); currency en ISO 4217 (EUR, USD…) o null.",
+  "  status: pagado si ya se cobró, acordado si se cerró, pendiente si queda por cobrar/confirmar,",
+  "  mencionado si solo se habló de ello. Array vacío si no se habló de dinero.",
+  "- goals: objetivos de negocio del cliente expresados en la llamada, en frases cortas.",
+  "- call_score: entero de 0 a 100 sobre la calidad de la llamada para ihsan.co (claridad del",
+  "  siguiente paso, objeciones resueltas, compromiso del cliente, avance comercial).",
   "- tasks: reescribe EN ESPAÑOL las tareas que Fathom detectó (llegan en inglés y a menudo",
   "  abreviadas). Una tarea por elemento, en imperativo, indicando el responsable cuando se",
   "  sepa. No añadas tareas que no estén en el material ni omitas ninguna. Array vacío si no hay.",
@@ -40,6 +50,33 @@ export const meetingBriefSchema = z.object({
   // briefs guardados antes de que este campo existiera.
   tasks: z.array(z.string()).default([]),
   sentiment: z.string().min(1),
+  // Análisis ampliado. Con `catch`: una objeción mal formada no debe tirar el brief entero,
+  // que es lo que el equipo necesita primero.
+  objections: z
+    .array(
+      z.object({
+        objection: z.string().min(1),
+        response: z.string().nullish().transform((value) => value ?? null),
+        resolved: z.boolean().catch(false),
+      }),
+    )
+    .catch([]),
+  payments: z
+    .array(
+      z.object({
+        concept: z.string().min(1),
+        amount: z.number().finite().nullish().transform((value) => value ?? null),
+        currency: z.string().nullish().transform((value) => value?.toUpperCase() ?? null),
+        status: z.enum(["acordado", "pendiente", "pagado", "mencionado"]).catch("mencionado"),
+      }),
+    )
+    .catch([]),
+  goals: z.array(z.string()).catch([]),
+  call_score: z
+    .number()
+    .transform((value) => Math.round(Math.min(100, Math.max(0, value))))
+    .nullable()
+    .catch(null),
 });
 
 export type MeetingBrief = z.infer<typeof meetingBriefSchema>;

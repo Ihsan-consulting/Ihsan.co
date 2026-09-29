@@ -3,7 +3,7 @@ import { z } from "zod";
 import {
   MAX_HISTORY_TURNS,
   MAX_QUESTION_CHARS,
-  answerMeetingQuestion,
+  streamMeetingAnswer,
   type ChatFailure,
 } from "@/lib/ai/chat";
 import { listMeetingDigests, type MeetingDigest } from "@/lib/queries/digests";
@@ -42,6 +42,25 @@ const FAILURE_MESSAGES: Record<ChatFailure, string> = {
   empty_model_response: "El modelo devolvió una respuesta vacía. Prueba a reformular la pregunta.",
 };
 
+/** Llamadas que el cliente puede enlazar como fuente si la respuesta las nombra. */
+const MAX_SOURCES = 40;
+const MAX_SOURCE_TITLE = 90;
+
+export type ChatSource = { id: number; title: string; date: string | null };
+
+function sourcesHeader(digests: readonly MeetingDigest[]): string {
+  const sources: ChatSource[] = digests.slice(0, MAX_SOURCES).map((digest) => ({
+    id: digest.recordingId,
+    // Por puntos de código: cortar un emoji por la mitad haría lanzar a encodeURIComponent.
+    title: Array.from(digest.title).slice(0, MAX_SOURCE_TITLE).join(""),
+    date: digest.startedAt,
+  }));
+  // Las cabeceras HTTP son ASCII: los títulos llevan tildes, así que van codificados.
+  return encodeURIComponent(JSON.stringify(sources));
+}
+
+const INTERRUPTED = "\n\n(La respuesta se interrumpió. Vuelve a preguntar.)";
+
 function fail(reason: string, status: number): Response {
   return Response.json({ ok: false, reason }, { status });
 }
@@ -73,7 +92,7 @@ export async function POST(request: Request): Promise<Response> {
     return fail("Todavía no hay llamadas archivadas sobre las que poder responder.", 200);
   }
 
-  const result = await answerMeetingQuestion({
+  const result = await streamMeetingAnswer({
     question: parsed.data.question,
     history: parsed.data.history ?? [],
     digests,
@@ -85,5 +104,31 @@ export async function POST(request: Request): Promise<Response> {
     return fail(FAILURE_MESSAGES[result.reason], status);
   }
 
-  return Response.json({ ok: true, answer: result.answer });
+  const encoder = new TextEncoder();
+  const body = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      let wrote = false;
+      try {
+        for await (const chunk of result.chunks) {
+          wrote = true;
+          controller.enqueue(encoder.encode(chunk));
+        }
+        if (!wrote) controller.enqueue(encoder.encode(FAILURE_MESSAGES.empty_model_response));
+      } catch {
+        controller.enqueue(
+          encoder.encode(wrote ? INTERRUPTED : FAILURE_MESSAGES.anthropic_request_failed),
+        );
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(body, {
+    headers: {
+      "content-type": "text/plain; charset=utf-8",
+      "cache-control": "no-store",
+      "x-chat-sources": sourcesHeader(digests),
+    },
+  });
 }

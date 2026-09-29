@@ -124,8 +124,16 @@ export type Database = {
           recording_id: number
           risks: Json
           sentiment: string | null
+          call_score: number | null
+          goals: Json | null
+          objections: Json | null
+          payments: Json | null
         }
         Insert: {
+          call_score?: number | null
+          goals?: Json | null
+          objections?: Json | null
+          payments?: Json | null
           created_at?: string
           executive_summary?: string | null
           headline?: string | null
@@ -141,6 +149,10 @@ export type Database = {
           sentiment?: string | null
         }
         Update: {
+          call_score?: number | null
+          goals?: Json | null
+          objections?: Json | null
+          payments?: Json | null
           created_at?: string
           executive_summary?: string | null
           headline?: string | null

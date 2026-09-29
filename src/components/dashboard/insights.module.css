@@ -1,0 +1,260 @@
+/* Objeciones, pagos y objetivos del Inicio. */
+
+.meetingLink {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: var(--line-hover);
+  text-underline-offset: 2px;
+  transition: color var(--dur-fast) var(--ease);
+}
+
+.meetingLink:hover {
+  color: var(--accent-ink);
+  text-decoration-color: var(--accent-ink);
+}
+
+/* --- Objeciones -------------------------------------------------------- */
+
+.objections {
+  display: flex;
+  flex-direction: column;
+}
+
+.objection {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: var(--sp-6);
+  align-items: start;
+  padding-block: var(--sp-7);
+  border-top: 1px solid var(--line);
+}
+
+.objection:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.rank {
+  padding-top: 2px;
+  color: var(--ink-6);
+  font-size: var(--t-s);
+  font-weight: 600;
+}
+
+.objection:first-child .rank {
+  color: var(--accent-ink);
+}
+
+.objectionBody {
+  min-width: 0;
+}
+
+.objectionText {
+  font-size: var(--t-lg);
+  font-weight: 560;
+  letter-spacing: -0.014em;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.objection:first-child .objectionText {
+  font-size: var(--t-xl);
+}
+
+.track {
+  position: relative;
+  display: block;
+  height: 6px;
+  margin-top: var(--sp-4);
+  overflow: hidden;
+  background-color: var(--surface-track);
+  border-radius: 3px;
+}
+
+.fill,
+.fillResolved {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: 3px;
+}
+
+.fill {
+  background-color: var(--warn);
+  opacity: 0.55;
+}
+
+.fillResolved {
+  background-color: var(--ok);
+}
+
+.response {
+  margin-top: var(--sp-4);
+  padding-left: var(--sp-5);
+  border-left: 2px solid var(--line-control);
+  color: var(--ink-3);
+  font-size: var(--t-sm);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.objectionMeta {
+  margin-top: var(--sp-3);
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+}
+
+.objectionStats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--sp-1);
+  white-space: nowrap;
+}
+
+.count {
+  font-size: var(--t-2xl);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.resolved {
+  font-size: var(--t-xs);
+}
+
+.resolved[data-tone="ok"] {
+  color: var(--ok);
+}
+
+.resolved[data-tone="warn"] {
+  color: var(--warn);
+}
+
+/* --- Pagos ------------------------------------------------------------- */
+
+.payments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-7);
+}
+
+.statusGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr));
+  gap: var(--sp-3);
+}
+
+.statusCell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--sp-5) var(--sp-6);
+  background-color: var(--surface-sunk);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ink-6);
+  border-radius: var(--r-lg);
+}
+
+.statusCell[data-tone="ok"] {
+  border-left-color: var(--ok);
+}
+
+.statusCell[data-tone="accent"] {
+  border-left-color: var(--accent);
+}
+
+.statusCell[data-tone="warn"] {
+  border-left-color: var(--warn);
+}
+
+.statusLabel {
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+}
+
+.statusValue {
+  font-size: var(--t-xl);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.statusNote {
+  color: var(--ink-5);
+  font-size: var(--t-2xs);
+}
+
+/* --- Filas compartidas (pagos recientes y objetivos) ------------------- */
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-5);
+  padding-block: var(--sp-5);
+  border-top: 1px solid var(--line);
+}
+
+.list > .row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-top: 6px;
+  border-radius: var(--r-pill);
+  background-color: var(--ink-5);
+}
+
+.dot[data-tone="ok"] {
+  background-color: var(--ok);
+}
+
+.dot[data-tone="accent"] {
+  background-color: var(--accent);
+}
+
+.dot[data-tone="warn"] {
+  background-color: var(--warn);
+}
+
+.goalMark {
+  flex: none;
+  color: var(--accent-ink);
+  font-size: var(--t-md);
+  line-height: 1.3;
+}
+
+.rowBody {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: var(--t-md);
+  letter-spacing: -0.01em;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.rowMeta {
+  color: var(--ink-4);
+  font-size: var(--t-xs);
+  overflow-wrap: anywhere;
+}
+
+.rowValue {
+  flex: none;
+  font-size: var(--t-md);
+  font-weight: 600;
+}

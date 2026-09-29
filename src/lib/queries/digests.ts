@@ -3,6 +3,15 @@ import "server-only";
 import { getAdminClient } from "@/lib/supabase/admin";
 import type { Json } from "@/lib/types/database";
 
+import {
+  parseCallScore,
+  parseGoals,
+  parseObjections,
+  parsePayments,
+  type Objection,
+  type Payment,
+} from "@/lib/ai/chat";
+
 import { toTextList, unwrap } from "./meetings";
 
 /**
@@ -36,6 +45,11 @@ export type MeetingDigest = {
   nextSteps: string[];
   sentiment: string | null;
   openCommitments: DigestCommitment[];
+  /** Análisis ampliado: `null` en filas antiguas (sin analizar), nunca inventado. */
+  objections?: Objection[] | null;
+  payments?: Payment[] | null;
+  goals?: string[] | null;
+  callScore?: number | null;
 };
 
 type InsightRow = {
@@ -46,7 +60,15 @@ type InsightRow = {
   risks: Json;
   next_steps: Json;
   sentiment: string | null;
+  objections?: Json | null;
+  payments?: Json | null;
+  goals?: Json | null;
+  call_score?: number | null;
 };
+
+const BASE_INSIGHT_COLUMNS =
+  "recording_id, headline, executive_summary, key_decisions, risks, next_steps, sentiment";
+const EXTENDED_INSIGHT_COLUMNS = `${BASE_INSIGHT_COLUMNS}, objections, payments, goals, call_score`;
 
 /** Las filas llegan por fecha descendente: la primera de cada reunión es la vigente. */
 function latestInsightByMeeting(rows: readonly InsightRow[]): Map<number, InsightRow> {
@@ -67,7 +89,10 @@ function groupCommitments(rows: readonly CommitmentRow[]): Map<number, DigestCom
   const map = new Map<number, DigestCommitment[]>();
   for (const row of rows) {
     const list = map.get(row.recording_id) ?? [];
-    list.push({ description: row.description, assigneeName: row.assignee_name });
+    list.push({
+      description: row.description,
+      assigneeName: row.assignee_name,
+    });
     map.set(row.recording_id, list);
   }
   return map;
@@ -94,20 +119,26 @@ export async function listMeetingDigests(limit = 60): Promise<MeetingDigest[]> {
 
   const ids = meetings.map((meeting) => meeting.recording_id);
 
-  const [insightRows, actionRows] = await Promise.all([
+  const readInsights = (columns: string) =>
     db
       .from("meeting_insights")
-      .select(
-        "recording_id, headline, executive_summary, key_decisions, risks, next_steps, sentiment",
-      )
+      .select(columns)
       .in("recording_id", ids)
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .returns<InsightRow[]>();
+
+  const [extendedRows, actionRows] = await Promise.all([
+    readInsights(EXTENDED_INSIGHT_COLUMNS),
     db
       .from("action_items")
       .select("recording_id, description, assignee_name")
       .in("recording_id", ids)
       .eq("completed", false),
   ]);
+
+  // Si la migración de las columnas nuevas aún no está aplicada, el chat sigue
+  // funcionando con el brief de siempre en vez de caerse.
+  const insightRows = extendedRows.error ? await readInsights(BASE_INSIGHT_COLUMNS) : extendedRows;
 
   const insights = latestInsightByMeeting(unwrap(insightRows, "los briefs"));
   const commitments = groupCommitments(unwrap(actionRows, "las tareas abiertas"));
@@ -126,6 +157,10 @@ export async function listMeetingDigests(limit = 60): Promise<MeetingDigest[]> {
       nextSteps: toTextList(insight?.next_steps),
       sentiment: insight?.sentiment ?? null,
       openCommitments: commitments.get(meeting.recording_id) ?? [],
+      objections: parseObjections(insight?.objections),
+      payments: parsePayments(insight?.payments),
+      goals: parseGoals(insight?.goals),
+      callScore: parseCallScore(insight?.call_score),
     } satisfies MeetingDigest;
   });
 }

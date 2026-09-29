@@ -12,7 +12,9 @@ import {
 } from "@/components/formatting";
 import { BriefPanel, SourceSummary } from "@/components/meetings/Brief";
 import { ActionItemList } from "@/components/meetings/Commitments";
+import { DataDrawer } from "@/components/meetings/DataDrawer";
 import { RecordingPlayer, SendChecklist } from "@/components/meetings/Detail";
+import { ExtendedInsights } from "@/components/meetings/Insights";
 import { DeliveryTrail, GoogleDocPanel, InviteeList } from "@/components/meetings/Sidebar";
 import { StatusBadge } from "@/components/ui/primitives";
 import { getMeetingDetail } from "@/lib/queries/meetings";
@@ -80,6 +82,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
           <span aria-hidden="true">←</span> Todas las llamadas
         </Link>
         <span className={styles.topSpacer} />
+        <DataDrawer meeting={meeting} />
         {meeting.shareUrl ? (
           <a className={styles.topLink} href={meeting.shareUrl} target="_blank" rel="noreferrer">
             Grabación <span aria-hidden="true">↗</span>
@@ -140,8 +143,10 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             durationLabel={duration}
             totalSeconds={secondsBetween(startedAt, endedAt)}
             actionItems={meeting.actionItems}
+            participants={meeting.invitees.length}
           />
           <BriefPanel brief={meeting.brief} />
+          <ExtendedInsights brief={meeting.brief} />
           <ActionItemList items={meeting.actionItems} />
           <SourceSummary
             markdown={meeting.fathomSummaryMarkdown}
@@ -156,6 +161,7 @@ export default async function MeetingDetailPage({ params }: PageProps) {
             deliveries={meeting.deliveries}
           />
           <GoogleDocPanel
+            recordingId={meeting.recordingId}
             docUrl={meeting.googleDocUrl}
             syncedAt={meeting.googleDocSyncedAt}
           />
