@@ -503,10 +503,8 @@ export async function listOpenActionItems(limit = 8): Promise<OpenActionItem[]> 
 }
 
 export async function listProblemDeliveries(limit = 6): Promise<ProblemDelivery[]> {
-  const db = getAdminClient();
-
   const rows = unwrap(
-    await db
+    await getAdminClient()
       .from("deliveries")
       .select("*")
       .in("status", ["failed", "pending"])
@@ -514,7 +512,23 @@ export async function listProblemDeliveries(limit = 6): Promise<ProblemDelivery[
       .limit(limit),
     "las entregas con incidencias",
   );
+  return withMeetingTitles(rows);
+}
 
+/** Últimas publicaciones en cualquier estado: el log de envíos del inicio. */
+export async function listRecentDeliveries(limit = 6): Promise<ProblemDelivery[]> {
+  const rows = unwrap(
+    await getAdminClient()
+      .from("deliveries")
+      .select("*")
+      .order("updated_at", { ascending: false })
+      .limit(limit),
+    "el log de envíos",
+  );
+  return withMeetingTitles(rows);
+}
+
+async function withMeetingTitles(rows: Tables<"deliveries">[]): Promise<ProblemDelivery[]> {
   if (rows.length === 0) return [];
 
   const headings = await fetchMeetingHeadings(uniqueIds(rows.map((row) => row.recording_id)));

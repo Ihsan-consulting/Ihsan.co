@@ -19,6 +19,7 @@ import {
   listMeetings,
   listOpenActionItems,
   listProblemDeliveries,
+  listRecentDeliveries,
 } from "@/lib/queries/meetings";
 
 import styles from "./page.module.css";
@@ -32,11 +33,12 @@ function greeting(hour: number): string {
 }
 
 export default async function DashboardPage() {
-  const [totals, meetings, openItems, problemDeliveries] = await Promise.all([
+  const [totals, meetings, openItems, problemDeliveries, recentDeliveries] = await Promise.all([
     getDashboardTotals(),
     listMeetings(200),
     listOpenActionItems(6),
     listProblemDeliveries(4),
+    listRecentDeliveries(6),
   ]);
 
   const series = weeklySeries(meetings);
@@ -174,8 +176,8 @@ export default async function DashboardPage() {
           <PendingDeliveries deliveries={problemDeliveries} />
         </Card>
 
-        <Card id="log" title="Envíos registrados" meta="Log" flush>
-          <DeliveryLog />
+        <Card id="log" title="Envíos registrados" meta={`Últimos ${recentDeliveries.length}`} flush>
+          <DeliveryLog deliveries={recentDeliveries} />
         </Card>
       </div>
     </div>

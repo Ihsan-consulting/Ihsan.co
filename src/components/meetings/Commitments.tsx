@@ -2,11 +2,12 @@ import { initials } from "@/components/formatting";
 import { EmptyState } from "@/components/ui/primitives";
 import type { MeetingActionItem } from "@/lib/queries/meetings";
 
+import { CommitmentToggle } from "./CommitmentToggle";
 import styles from "./detail.module.css";
 
 /**
- * Compromisos de una reunión. Son de solo lectura: quien los cierra es Fathom,
- * no este panel, así que la marca es un indicador y no una casilla.
+ * Compromisos de una reunión. La casilla los cierra o reabre desde el panel; Fathom
+ * puede cerrarlos también, pero nunca reabre uno cerrado aquí (ver `ingestMeeting`).
  */
 export function ActionItemList({ items }: { items: MeetingActionItem[] }) {
   const open = items.filter((item) => !item.completed).length;
@@ -31,22 +32,12 @@ export function ActionItemList({ items }: { items: MeetingActionItem[] }) {
         <ul className={styles.tasks}>
           {items.map((item) => (
             <li key={item.id} className={styles.task} data-done={item.completed || undefined}>
-              <span className={styles.taskBox} aria-hidden="true">
-                {item.completed ? (
-                  <svg
-                    viewBox="0 0 10 10"
-                    width="9"
-                    height="9"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.8"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1.5 5.2L3.8 7.5L8.5 2.6" />
-                  </svg>
-                ) : null}
-              </span>
+              <CommitmentToggle
+                id={item.id}
+                done={item.completed}
+                variant="box"
+                label={item.description}
+              />
 
               <span className={styles.taskBody}>
                 <span className={styles.taskText}>{item.description}</span>

@@ -9,6 +9,7 @@ import {
   isoAttribute,
 } from "@/components/formatting";
 import { openItemKind } from "@/components/meetings/aggregate";
+import { CommitmentToggle } from "@/components/meetings/CommitmentToggle";
 import type { MeetingSummary, OpenActionItem } from "@/lib/queries/meetings";
 
 import styles from "./queue.module.css";
@@ -55,6 +56,12 @@ export function DecisionQueue({ items }: { items: ReadonlyArray<OpenActionItem> 
                 <Link href={`/meetings/${item.recordingId}`} className={styles.queueCta}>
                   Abrir llamada
                 </Link>
+                <CommitmentToggle
+                  id={item.id}
+                  done={item.completed}
+                  variant="button"
+                  label={item.description}
+                />
                 {item.playbackUrl && item.timestamp ? (
                   <a
                     className={styles.queueGhost}

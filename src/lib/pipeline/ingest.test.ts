@@ -97,6 +97,30 @@ describe("ingestMeeting", () => {
     expect(actions?.args[0]?.[1]).toEqual({ onConflict: "recording_id,description" });
   });
 
+  it("no reabre un compromiso cerrado en el panel cuando Fathom lo reenvía abierto", async () => {
+    const calls = withMock();
+
+    await ingestMeeting(
+      parse({
+        recording_id: 987654321,
+        action_items: [
+          { description: "Enviar SOW", completed: false },
+          { description: "Firmar contrato", completed: true },
+        ],
+      }),
+    );
+
+    const rows = calls
+      .filter((call) => call.table === "action_items" && call.ops.includes("upsert"))
+      .flatMap((call) => call.args[0]?.[0] as Array<Record<string, unknown>>);
+
+    const open = rows.find((row) => row.description === "Enviar SOW");
+    const done = rows.find((row) => row.description === "Firmar contrato");
+    expect(open).toBeDefined();
+    expect(open).not.toHaveProperty("completed");
+    expect(done).toMatchObject({ completed: true });
+  });
+
   it("devuelve un error en vez de lanzar cuando falla el upsert de meetings", async () => {
     withMock((table) =>
       table === "meetings"

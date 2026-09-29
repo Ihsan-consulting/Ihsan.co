@@ -1,0 +1,79 @@
+.boxWrap {
+  display: inline-flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sp-2);
+}
+
+.box {
+  display: grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  margin-top: 1px;
+  padding: 0;
+  border: 1.5px solid var(--ink-6);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-invert);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    transform 150ms ease;
+}
+
+.box:hover {
+  border-color: var(--ok);
+}
+
+.box:active {
+  transform: scale(0.9);
+}
+
+.box[data-done] {
+  border-color: var(--ok);
+  background-color: var(--ok);
+}
+
+.box[data-pending] {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
+  height: 30px;
+  padding-inline: 11px;
+  border: 1px solid var(--line-control);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--t-s);
+  cursor: pointer;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.button:hover,
+.button[data-done] {
+  border-color: var(--ok);
+  background-color: var(--ok-wash);
+  color: var(--ok);
+}
+
+.button:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.error {
+  font-size: var(--t-2xs);
+  color: var(--danger);
+}

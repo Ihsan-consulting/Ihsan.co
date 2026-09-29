@@ -353,3 +353,73 @@
   color: var(--ink-4);
   text-align: center;
 }
+
+/* --- Log de envíos ----------------------------------------------------- */
+
+.logList {
+  display: flex;
+  flex-direction: column;
+}
+
+.logList > li + li {
+  border-top: 1px solid var(--line);
+}
+
+.logRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: var(--sp-3);
+  row-gap: 3px;
+  padding-block: var(--sp-4);
+  color: var(--ink);
+}
+
+.logRow:hover .logTitle {
+  color: var(--accent-ink);
+}
+
+.logDot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--r-pill);
+  background-color: var(--ok);
+}
+
+.logDot[data-status="pending"] {
+  background-color: var(--warn);
+}
+
+.logDot[data-status="failed"] {
+  background-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-wash);
+}
+
+.logTitle {
+  overflow: hidden;
+  font-size: var(--t-s);
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 150ms ease;
+}
+
+.logMeta {
+  grid-column: 2;
+  display: flex;
+  gap: var(--sp-2);
+  font-size: var(--t-2xs);
+  color: var(--ink-4);
+}
+
+.logMeta [data-status="sent"] {
+  color: var(--ok);
+}
+
+.logMeta [data-status="pending"] {
+  color: var(--warn);
+}
+
+.logMeta [data-status="failed"] {
+  color: var(--danger);
+}

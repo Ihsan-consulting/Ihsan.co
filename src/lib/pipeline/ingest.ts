@@ -68,7 +68,10 @@ function actionItemRows(payload: FathomWebhookPayload): TablesInsert<"action_ite
       recording_id: payload.recording_id,
       description,
       user_generated: item.user_generated ?? null,
-      completed: item.completed ?? false,
+      // Solo se escribe cuando Fathom lo da por cerrado. Si viaja `false`, el upsert
+      // reabriría un compromiso que alguien cerró desde el panel; al omitirlo, una fila
+      // nueva toma el valor por defecto (abierto) y una existente conserva el suyo.
+      ...(item.completed ? { completed: true } : {}),
       recording_timestamp: item.recording_timestamp ?? null,
       recording_playback_url: item.recording_playback_url ?? null,
       assignee_name: item.assignee?.name ?? null,
@@ -107,11 +110,18 @@ export async function ingestMeeting(
     }
   }
 
+  // Dos lotes con las mismas columnas cada uno: en un lote mixto PostgREST rellenaría
+  // `completed` con null en las filas que no lo traen.
   const actionItems = actionItemRows(payload);
-  if (actionItems.length > 0) {
+  const batches = [
+    actionItems.filter((row) => row.completed === true),
+    actionItems.filter((row) => row.completed !== true),
+  ];
+  for (const batch of batches) {
+    if (batch.length === 0) continue;
     const result = await db
       .from("action_items")
-      .upsert(actionItems, { onConflict: "recording_id,description" });
+      .upsert(batch, { onConflict: "recording_id,description" });
     if (result.error) {
       return { ok: false, error: `action_items_upsert_failed: ${result.error.message}` };
     }

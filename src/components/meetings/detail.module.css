@@ -195,24 +195,6 @@
   border-top: 0;
 }
 
-.taskBox {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 17px;
-  height: 17px;
-  margin-top: 1px;
-  border: 1.5px solid var(--ink-6);
-  border-radius: var(--r-pill);
-  color: #fff;
-}
-
-.task[data-done] .taskBox {
-  border-color: var(--ok);
-  background-color: var(--ok);
-  color: var(--ink-invert);
-}
-
 .taskBody {
   display: flex;
   flex: 1;

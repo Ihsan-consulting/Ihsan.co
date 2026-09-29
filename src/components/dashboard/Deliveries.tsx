@@ -72,15 +72,39 @@ export function PendingDeliveries({ deliveries }: { deliveries: ReadonlyArray<Pr
   );
 }
 
-/**
- * Log de envíos. El panel solo consulta las entregas con incidencia, así que las
- * publicaciones correctas se leen en el detalle de cada llamada, no aquí.
- */
-export function DeliveryLog() {
+const LOG_STATUS_LABEL: Record<ProblemDelivery["status"], string> = {
+  sent: "Publicado",
+  pending: "En cola",
+  failed: "Fallido",
+};
+
+/** Log de envíos: las últimas publicaciones, en cualquier estado. */
+export function DeliveryLog({ deliveries }: { deliveries: ReadonlyArray<ProblemDelivery> }) {
+  if (deliveries.length === 0) {
+    return (
+      <p className={styles.logEmpty}>
+        Aún no se ha publicado nada. Cada brief que llegue a Discord aparecerá aquí.
+      </p>
+    );
+  }
+
   return (
-    <p className={styles.logEmpty}>
-      Aún no hay envíos registrados en esta vista. El panel solo vigila aquí las entregas con
-      incidencia; el recorrido completo de cada publicación está en el detalle de su llamada.
-    </p>
+    <ul className={styles.logList}>
+      {deliveries.map((delivery) => (
+        <li key={delivery.id}>
+          <Link href={`/meetings/${delivery.recordingId}`} className={styles.logRow}>
+            <span className={styles.logDot} data-status={delivery.status} aria-hidden="true" />
+            <span className={styles.logTitle}>{delivery.meetingTitle}</span>
+            <span className={styles.logMeta}>
+              <span data-status={delivery.status}>{LOG_STATUS_LABEL[delivery.status]}</span>
+              <span className={styles.sendSep} aria-hidden="true">
+                ·
+              </span>
+              <span className="num">{formatRelative(delivery.sentAt ?? delivery.updatedAt)}</span>
+            </span>
+          </Link>
+        </li>
+      ))}
+    </ul>
   );
 }
